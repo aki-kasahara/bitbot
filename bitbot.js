@@ -12,9 +12,9 @@ var colors      = require('colors'),
 module.exports = {
 
     markets: [
-        { 'LTC_USD': 0.5 },
-        { 'BTC_USD': 0.02 },
-        { 'LTC_BTC': 1 }
+        { 'BTC_USD': 0.02 }
+        //{ 'LTC_USD': 0.5 },
+        //{ 'LTC_BTC': 1 }
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
@@ -27,12 +27,12 @@ module.exports = {
     openTrades: [],
 
     exchangeMarkets: {
-        'cexio'    : require('./exchanges/cexio'),
-        'btce'     : require('./exchanges/btce'),
+        //'cexio'    : require('./exchanges/cexio'),
+        //'btce'     : require('./exchanges/btce'),
         'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
-        'btcchina' : require('./exchanges/btcchina'),
-        'vircurex' : require('./exchanges/vircurex')
+        //'btcchina' : require('./exchanges/btcchina'),
+        //'vircurex' : require('./exchanges/vircurex')
         // 'anxpro'   : require('./exchanges/anxpro')
     },
 

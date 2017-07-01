@@ -12,12 +12,14 @@ var colors      = require('colors'),
 module.exports = {
 
     markets: [
-        { 'BTC_USD': 0.02 }
+        //{ 'BTC_USD': 0.02 }
         //{ 'LTC_USD': 0.5 },
         //{ 'LTC_BTC': 1 }
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
+        //{ 'ETH_BTC': 0.1 }
+        { 'BTC_JPY': 0.1 }
     ],
 
     marketIndex: 0,
@@ -29,11 +31,12 @@ module.exports = {
     exchangeMarkets: {
         //'cexio'    : require('./exchanges/cexio'),
         //'btce'     : require('./exchanges/btce'),
-        'bitfinex' : require('./exchanges/bitfinex'),
+        //'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
         //'btcchina' : require('./exchanges/btcchina'),
         //'vircurex' : require('./exchanges/vircurex')
         // 'anxpro'   : require('./exchanges/anxpro')
+        'bitflyer'   : require('./exchanges/bitflyer')
     },
 
     validExchanges: {},
@@ -121,14 +124,16 @@ module.exports = {
             result,
             arb;
 
-        promises = _.map(self.getMarketsWithoutOpenOrders(), function (exchange) {
+        var list = self.getMarketsWithoutOpenOrders();
+
+        promises = _.map(list, function (exchange) {
             return exchange.getExchangeInfo();
         }, this);
 
-        all(promises).then(function () {
+        all(promises).then(function (array) {
             console.log('*** Finished Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
-
-            result = self.calculateArbOpportunity(self.getMarketsWithoutOpenOrders());
+            var list = self.getMarketsWithoutOpenOrders();
+            result = self.calculateArbOpportunity(list);
 
             arb = self.getBestArb(result);
 
@@ -236,7 +241,7 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-
+        console.log("sell price: " + ex2.prices.sell.price + " buy price: " + ex1.prices.buy.price);
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }

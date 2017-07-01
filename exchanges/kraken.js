@@ -65,7 +65,7 @@ module.exports = {
                 console.log('Error when checking balance for '.red + self.exchangeName);
             }
 
-            try {deferred.resolve();} catch (e) {}
+            try {deferred.resolve(self);} catch (e) {}
         });
 
         setTimeout(function () {
@@ -161,7 +161,7 @@ module.exports = {
                 console.log('Error! Failed to get prices for ' + self.exchangeName);
             }
 
-            try {deferred.resolve();} catch (e){}
+            try {deferred.resolve(self);} catch (e){}
         });
 
         setTimeout(function () {

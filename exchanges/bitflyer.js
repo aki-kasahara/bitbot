@@ -3,6 +3,7 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
+    crypto          = require('crypto'),
     request           = require('request');
     //BitflyerClient    = require('bitflyer-client');
 
@@ -11,6 +12,7 @@ var colors          = require('colors'),
 module.exports = {
 
     exchangeName: 'bitflyer',
+    host: 'https://api.bitflyer.jp',
 
     balances: {},
 
@@ -45,19 +47,58 @@ module.exports = {
 
         this.balances = {};
 
-        //TODO
         //ここにbitflyerの資産残高を取得する処理を実装する
+        self.requestPrivateAPI('GET', '/v1/me/getbalance', "undefined", function(error, response, body){
+          if (!error && response.statusCode == 200){
+            var array = JSON.parse(body);
+            _.each(array, function(balance, index){
+              self.balances[balance.currency_code] = balance.available;
+            });
 
-        setTimeout(function () {
-            try { deferred.resolve();} catch (e){}
-        }, config.requestTimeouts.balance);
+            console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
+
+            self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
+
+          } else {
+            console.log('error: ' + error);
+            console.log('Error when checking balance for '.red + self.exchangeName);
+          }
+
+          deferred.resolve(self);
+        });
+
+        // setTimeout(function () {
+        //     try { deferred.resolve();} catch (e){}
+        // }, config.requestTimeouts.balance);
 
         return deferred.promise;
     },
 
     createOrder: function (market, type, rate, amount) {
-        //TODO
         //注文を出す処理を実装する
+        this.hasOpenOrder = true;
+        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
+        var body = {
+          product_code : this.market.name,
+          child_order_type : 'LIMIT',
+          side : type.toUpperCase(),
+          price : rate,
+          size : amount
+        };
+        self.requestPrivateAPI('POST', '/v1/me/sendchildorder', body, function(error, response, body){
+          if (!error && response.statusCode == 200){
+            var json = JSON.parse(body);
+            console.log("bitflyer child_order_acceptance_id " + json.child_order_acceptance_id);
+            self.emitter.emit(self.exchangeName + ':orderCreated');
+          } else {
+            console.log('bitflyer ORDER UNSUCCESSFULL '.red, err);
+            _.delay(function () {
+                self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+            }, config.interval);
+          }
+
+          deferred.resolve(self);
+        });
     },
 
     calculateProfit: function (amount, decimals) {
@@ -82,11 +123,9 @@ module.exports = {
 
         console.log('Checking prices for '.yellow + this.exchangeName);
 
-        //TODO
         //板から注文情報を取得する処理を実装する
-        var host = 'https://api.bitflyer.jp';
         var getboard_path = '/v1/getboard?product_code=';
-        request(host + getboard_path + market, function(error, response, body){
+        request(self.host + getboard_path + market, function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
             self.prices.buy.price=json.bids[0].price;
@@ -94,11 +133,10 @@ module.exports = {
             self.prices.sell.price=json.asks[0].price;
             self.prices.sell.quantity=json.asks[0].size;
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-            deferred.resolve(self);
           } else {
             console.log('error: ' + error);
-
           }
+          try {deferred.resolve(self);} catch (e){}
         });
 
         // setTimeout(function () {
@@ -111,8 +149,51 @@ module.exports = {
     //最後に実行されてからconfig.interval/1000秒後にcallback関数呼ばれる
     checkOrderStatus: _.debounce(function () {
         var self = this;
-
-        //TODO
+        var path = '/v1/me/getchildorders?product_code=' + this.market.name +'&child_order_state=ACTIVE';
         //注文したorderの状況を確認する
-    }, config.interval)
+        self.requestPrivateAPI('GET', path, "undefined", function(error, response, body){
+          if (!error && response.statusCode == 200){
+            var json = JSON.parse(body);
+            if (_.isEmpty(json)){
+              console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+              _.delay(function () {
+                  self.hasOpenOrder = false;
+                  self.emitter.emit(self.exchangeName + ':orderMatched');
+              }, config.interval);
+            } else {
+              console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+              self.emitter.emit(self.exchangeName + ':orderNotMatched');
+            }
+          } else {
+            console.log('bitflyer checkOrderStatus UNSUCCESSFULL '.red, err);
+            self.emitter.emit(self.exchangeName + ':orderNotMatched');
+          }
+
+          deferred.resolve(self);
+        });
+    }, config.interval),
+
+    requestPrivateAPI: function(method, path, body, callback){
+      var self = this;
+      var timestamp = Date.now().toString();
+      var text = timestamp + method + path;
+      var signed_text = crypto.createHmac('sha256', config.bitflyer.secret).update(text).digest('hex');
+      var options = {
+        url: self.host + path,
+        method : method,
+        headers: {
+            'ACCESS-KEY': config.bitflyer.apiKey,
+            'ACCESS-TIMESTAMP': timestamp,
+            'ACCESS-SIGN': signed_text,
+            'Content-Type': 'application/json'
+        }
+      };
+
+      if (method==="POST"){
+        options.body = JSON.stringify(body);
+      }
+
+      request(options, callback);
+    }
+
 };

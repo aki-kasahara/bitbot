@@ -18,7 +18,7 @@ module.exports = {
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
-        //{ 'ETH_BTC': 0.1 }
+        { 'ETH_BTC': 0.1 },
         { 'BTC_JPY': 0.1 }
     ],
 
@@ -260,6 +260,13 @@ module.exports = {
         smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2);
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
 
+        isMinimumAmountViable = this.isMinimumAmountViable(ex1, ex2, smallestAmountAvailable);
+
+        if(!isMinimumAmountViable){
+          //十分な出来高がない場合処理を終了する
+          return false;
+        }
+
         cost = ex1.calculateCost(smallestAmountAvailable, smallestDecimal);
         profit = ex2.calculateProfit(smallestAmountAvailable, smallestDecimal);
 
@@ -270,8 +277,6 @@ module.exports = {
         console.log(ex2.exchangeName + ' cost: '.green, cost.cost);
         console.log('final Profit: ', finalProfit);
         console.log('###########'.green);
-
-        isMinimumAmountViable = this.isMinimumAmountViable(ex1, ex2, smallestAmountAvailable);
 
         if (finalProfit > 0 && isMinimumAmountViable) {
             return {

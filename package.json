@@ -12,6 +12,7 @@
     "vircurex": "0.1.0",
     "promised-io": "0.3.4",
     "underscore": "1.5.2",
+    "request": "2.81.0",
     "jasmine-node": "1.11.0"
   }
 }

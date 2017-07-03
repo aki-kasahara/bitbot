@@ -52,10 +52,10 @@ module.exports = {
           if (!error && response.statusCode == 200){
             var array = JSON.parse(body);
             _.each(array, function(balance, index){
-              self.balances[balance.currency_code] = balance.available;
+              self.balances[balance.currency_code.toLowerCase()] = balance.available;
             });
 
-            console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
+            console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green + JSON.stringify(self.balances));
 
             self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
 
@@ -76,6 +76,7 @@ module.exports = {
 
     createOrder: function (market, type, rate, amount) {
         //注文を出す処理を実装する
+        var self = this;
         this.hasOpenOrder = true;
         console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
         var body = {
@@ -91,13 +92,13 @@ module.exports = {
             console.log("bitflyer child_order_acceptance_id " + json.child_order_acceptance_id);
             self.emitter.emit(self.exchangeName + ':orderCreated');
           } else {
-            console.log('bitflyer ORDER UNSUCCESSFULL '.red, err);
+            console.log('bitflyer ORDER UNSUCCESSFULL '.red, body);
             _.delay(function () {
                 self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
             }, config.interval);
           }
 
-          deferred.resolve(self);
+          //deferred.resolve(self);
         });
     },
 
@@ -148,6 +149,7 @@ module.exports = {
 
     //最後に実行されてからconfig.interval/1000秒後にcallback関数呼ばれる
     checkOrderStatus: _.debounce(function () {
+        var deferred = new Deferred();
         var self = this;
         var path = '/v1/me/getchildorders?product_code=' + this.market.name +'&child_order_state=ACTIVE';
         //注文したorderの状況を確認する
@@ -171,12 +173,17 @@ module.exports = {
 
           deferred.resolve(self);
         });
+        return deferred.promise;
     }, config.interval),
 
     requestPrivateAPI: function(method, path, body, callback){
       var self = this;
       var timestamp = Date.now().toString();
       var text = timestamp + method + path;
+      if (method==="POST"){
+        text = text + JSON.stringify(body);
+      }
+
       var signed_text = crypto.createHmac('sha256', config.bitflyer.secret).update(text).digest('hex');
       var options = {
         url: self.host + path,

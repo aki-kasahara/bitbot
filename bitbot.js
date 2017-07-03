@@ -213,8 +213,7 @@ module.exports = {
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
             console.log('Cool! There is enough balance to perform the transaction!'.green);
             return true;
-        }
-        else {
+        } else {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
             return false;
         }
@@ -241,7 +240,7 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-        console.log("sell price: " + ex2.prices.sell.price + " buy price: " + ex1.prices.buy.price);
+        console.log("sell price: " + ex2.prices.sell.price + " sell amount:" + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }

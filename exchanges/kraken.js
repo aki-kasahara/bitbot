@@ -22,7 +22,8 @@ module.exports = {
         'XLTC': 'ltc',
         'ZUSD': 'usd',
         'XNMC': 'nmc',
-        'ZEUR': 'eur'
+        'ZEUR': 'eur',
+        'XETH': 'eth'
     },
 
     hasOpenOrder: false,
@@ -56,7 +57,7 @@ module.exports = {
                     self.balances[self.balancesMap[idx]] = +balance;
                 });
 
-                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green);
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green + JSON.stringify(self.balances));
 
                 self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
             }

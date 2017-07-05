@@ -18,7 +18,7 @@ module.exports = {
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
-        { 'ETH_BTC': 0.1 },
+        //{ 'ETH_BTC': 0.1 },
         { 'BTC_JPY': 0.1 }
     ],
 
@@ -33,6 +33,7 @@ module.exports = {
         //'btce'     : require('./exchanges/btce'),
         //'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
+        //'coincheck'   : require('./exchanges/coincheck'),
         //'btcchina' : require('./exchanges/btcchina'),
         //'vircurex' : require('./exchanges/vircurex')
         // 'anxpro'   : require('./exchanges/anxpro')
@@ -46,7 +47,6 @@ module.exports = {
         this.bindEvents();
         this.initializeExchanges();
         this.setupMarket();
-
         this.fetchBalances();
     },
 
@@ -240,7 +240,7 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-        console.log("sell price: " + ex2.prices.sell.price + " sell amount:" + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
+        console.log("sell price: " + ex2.prices.sell.price + " sell amount: " + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
@@ -361,8 +361,7 @@ module.exports = {
 
         if (amount >= minEx1 && amount >= minEx2) {
             return true;
-        }
-        else {
+        } else {
             console.log('not enough liquidity in exchanges to match order immediately'.red);
             return false;
         }

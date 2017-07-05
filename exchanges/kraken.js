@@ -57,7 +57,7 @@ module.exports = {
                     self.balances[self.balancesMap[idx]] = +balance;
                 });
 
-                console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green + JSON.stringify(self.balances));
+                console.log('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
 
                 self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
             }
@@ -96,14 +96,12 @@ module.exports = {
             type: newType,
             ordertype: 'limit',
             price: newRate,
-            volume: amount,
-            oflags: 'viqc'
+            volume: amount
         }, function (err, data) {
             if (!err && _.isEmpty(data.error)) {
-                console.log('KRAKEN resolved successfully!');
+                console.log('KRAKEN resolved successfully! ' + data.result.txid[0]);
                 self.emitter.emit(self.exchangeName + ':orderCreated');
-            }
-            else {
+            } else {
                 console.log('KRAKEN error on order: ', err);
                 if (data.error) { console.log('KRAKEN error on order: ', data.error)}
                 _.delay(function () {
@@ -140,21 +138,11 @@ module.exports = {
                 var resultMarket = _.keys(data.result),
                     tempData = data.result[resultMarket];
 
-                //ugly, but will do for now
-                if (config.market === 'LTC_BTC' || config.market === 'NMC_BTC') {
-                    self.prices.sell.price = (1/_.first(tempData.asks)[0]);
-                    self.prices.sell.quantity = (_.first(tempData.asks)[1] * _.first(tempData.asks)[0]).toFixed(8);
+                self.prices.buy.price = parseFloat(tempData.asks[1][0]);
+                self.prices.buy.quantity = parseFloat(tempData.asks[0][1]) + parseFloat(tempData.asks[1][1]);
 
-                    self.prices.buy.price = (1/_.first(tempData.bids)[0]);
-                    self.prices.buy.quantity = (_.first(tempData.bids)[1] * _.first(tempData.bids)[0]).toFixed(8);
-                }
-                else {
-                    self.prices.buy.price = _.first(tempData.asks)[0];
-                    self.prices.buy.quantity = _.first(tempData.asks)[1];
-
-                    self.prices.sell.price = _.first(tempData.bids)[0];
-                    self.prices.sell.quantity = _.first(tempData.bids)[1];
-                }
+                self.prices.sell.price = parseFloat(tempData.bids[1][0]);
+                self.prices.sell.quantity = parseFloat(tempData.bids[0][1]) + parseFloat(tempData.bids[1][1]);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }

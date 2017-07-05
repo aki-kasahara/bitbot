@@ -55,7 +55,7 @@ module.exports = {
               self.balances[balance.currency_code.toLowerCase()] = balance.available;
             });
 
-            console.log('Balance for '.green + self.exchangeName + ' fetched successfully'.green + JSON.stringify(self.balances));
+            console.log('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
 
             self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
 
@@ -129,10 +129,11 @@ module.exports = {
         request(self.host + getboard_path + market, function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            self.prices.buy.price=json.bids[0].price;
-            self.prices.buy.quantity=json.bids[0].size;
-            self.prices.sell.price=json.asks[0].price;
-            self.prices.sell.quantity=json.asks[0].size;
+            //2つ目の価格と２つ目までの数量を代入する
+            self.prices.buy.price=json.bids[1].price;
+            self.prices.buy.quantity=json.bids[0].size + json.bids[1].size;
+            self.prices.sell.price=json.asks[1].price;
+            self.prices.sell.quantity=json.asks[0].size + json.asks[1].size;
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);

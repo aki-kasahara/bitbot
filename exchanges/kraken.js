@@ -23,7 +23,8 @@ module.exports = {
         'ZUSD': 'usd',
         'XNMC': 'nmc',
         'ZEUR': 'eur',
-        'XETH': 'eth'
+        'XETH': 'eth',
+        'ZJPY': 'jpy'
     },
 
     hasOpenOrder: false,

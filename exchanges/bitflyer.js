@@ -168,7 +168,7 @@ module.exports = {
               self.emitter.emit(self.exchangeName + ':orderNotMatched');
             }
           } else {
-            console.log('bitflyer checkOrderStatus UNSUCCESSFULL '.red, err);
+            console.log('bitflyer checkOrderStatus UNSUCCESSFULL '.red, error);
             self.emitter.emit(self.exchangeName + ':orderNotMatched');
           }
 

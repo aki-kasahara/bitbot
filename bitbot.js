@@ -19,8 +19,12 @@ module.exports = {
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 }
         //{ 'ETH_BTC': 0.1 },
-        { 'BTC_JPY': 0.1 }
+        { 'BTC_JPY': 0.05 }
     ],
+
+    minimumProfit: {
+      'BTC_JPY': 10
+    },
 
     marketIndex: 0,
 
@@ -277,7 +281,7 @@ module.exports = {
         console.log('final Profit: ', finalProfit);
         console.log('###########'.green);
 
-        if (finalProfit > 0 && isMinimumAmountViable) {
+        if (finalProfit > this.minimumProfit[ex1.market.name] && isMinimumAmountViable) {
             return {
                 ex1: {
                     name: ex1.exchangeName,

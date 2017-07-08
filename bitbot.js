@@ -36,8 +36,8 @@ module.exports = {
         //'cexio'    : require('./exchanges/cexio'),
         //'btce'     : require('./exchanges/btce'),
         //'bitfinex' : require('./exchanges/bitfinex'),
-        'kraken'   : require('./exchanges/kraken'),
-        //'coincheck'   : require('./exchanges/coincheck'),
+        //'kraken'   : require('./exchanges/kraken'),
+        'coincheck'   : require('./exchanges/coincheck'),
         //'btcchina' : require('./exchanges/btcchina'),
         //'vircurex' : require('./exchanges/vircurex')
         // 'anxpro'   : require('./exchanges/anxpro')
@@ -259,6 +259,7 @@ module.exports = {
             profit,
             smallestDecimal,
             isMinimumAmountViable;
+        var minimumProfit = this.minimumProfit[ex1.market.name];
 
         smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2);
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
@@ -267,6 +268,7 @@ module.exports = {
 
         if(!isMinimumAmountViable){
           //十分な出来高がない場合処理を終了する
+          console.log("amount is not viable".red);
           return false;
         }
 
@@ -281,7 +283,7 @@ module.exports = {
         console.log('final Profit: ', finalProfit);
         console.log('###########'.green);
 
-        if (finalProfit > this.minimumProfit[ex1.market.name] && isMinimumAmountViable) {
+        if (finalProfit > minimumProfit) {
             return {
                 ex1: {
                     name: ex1.exchangeName,
@@ -295,8 +297,8 @@ module.exports = {
                 },
                 finalProfit: finalProfit
             };
-        }
-        else {
+        } else {
+            console.log("final Profit isn't more than: ".red + minimumProfit);
             return false;
         }
     },

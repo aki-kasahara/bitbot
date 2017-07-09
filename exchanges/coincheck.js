@@ -122,12 +122,12 @@ module.exports = {
         request(self.host + '/api/order_books', function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            //2つ目の価格と２つ目までの数量を代入する
-            self.prices.buy.price=json.bids[1][0];
-            self.prices.buy.quantity= parseFloat(json.bids[0][1]) + parseFloat(json.bids[1][1]);
+            //1つ目の価格と1つ目までの数量を代入する
+            self.prices.buy.price=json.bids[0][0];
+            self.prices.buy.quantity= parseFloat(json.bids[0][1]);
 
-            self.prices.sell.price=json.asks[1][0];
-            self.prices.sell.quantity= parseFloat(json.asks[0][1]) + parseFloat(json.asks[1][1]);
+            self.prices.sell.price=json.asks[0][0];
+            self.prices.sell.quantity= parseFloat(json.asks[0][1]);
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);
@@ -151,7 +151,7 @@ module.exports = {
         self.requestPrivateAPI('GET', path, "undefined", function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            if (_.isEmpty(json)){
+            if (_.isEmpty(json.orders)){
               console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
               _.delay(function () {
                   self.hasOpenOrder = false;

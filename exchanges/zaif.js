@@ -139,11 +139,12 @@ module.exports = {
         request("https://api.zaif.jp/api/1/depth/" + market.toLowerCase(), function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            //1つ目の価格と1つ目までの数量を代入する
-            self.prices.buy.price=json.bids[0][0];
-            self.prices.buy.quantity=json.bids[0][1];
-            self.prices.sell.price=json.asks[0][0];
-            self.prices.sell.quantity=json.asks[0][1];
+            //1つ目の価格と1つ目までの数量を代入する。一つの取引所内ではsell.price - buy.priceが常に負になるようにする。
+            self.prices.sell.price=json.bids[0][0];
+            self.prices.sell.quantity=json.bids[0][1];
+
+            self.prices.buy.price=json.asks[0][0];
+            self.prices.buy.quantity=json.asks[0][1];
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);

@@ -36,12 +36,12 @@ module.exports = {
         //'cexio'    : require('./exchanges/cexio'),
         //'btce'     : require('./exchanges/btce'),
         //'bitfinex' : require('./exchanges/bitfinex'),
-        //'kraken'   : require('./exchanges/kraken'),
+        'kraken'   : require('./exchanges/kraken'),
         'coincheck'   : require('./exchanges/coincheck'),
         //'btcchina' : require('./exchanges/btcchina'),
         'zaif' : require('./exchanges/zaif'),
         // 'anxpro'   : require('./exchanges/anxpro')
-        //'bitflyer'   : require('./exchanges/bitflyer')
+        'bitflyer'   : require('./exchanges/bitflyer')
     },
 
     validExchanges: {},
@@ -288,12 +288,12 @@ module.exports = {
                 ex1: {
                     name: ex1.exchangeName,
                     buy: ex1.prices.buy.price,
-                    amount: cost.amount
+                    amount: parseFloat(cost.amount)
                 },
                 ex2: {
                     name: ex2.exchangeName,
                     sell: ex2.prices.sell.price,
-                    amount: profit.amount
+                    amount: parseFloat(profit.amount)
                 },
                 finalProfit: finalProfit
             };
@@ -330,7 +330,7 @@ module.exports = {
     getTotalBalanceInExchanges: function () {
         var totalBalances = {};
 
-        _.each(this.exchangeMarkets, function (exchange) {
+        _.each(this.exchangeMarkets, function (exchange, name) {
             _.each(exchange.balances, function (val, key) {
                 if (val > 0) {
                     if (totalBalances[key]) {

@@ -123,10 +123,10 @@ module.exports = {
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
             //1つ目の価格と1つ目までの数量を代入する
-            self.prices.sell.price=json.bids[1][0];
+            self.prices.sell.price= parseFloat(json.bids[1][0]);
             self.prices.sell.quantity= parseFloat(json.bids[0][1]) + parseFloat(json.bids[1][1]);
 
-            self.prices.buy.price=json.asks[1][0];
+            self.prices.buy.price= parseFloat(json.asks[1][0]);
             self.prices.buy.quantity= parseFloat(json.asks[0][1]) + parseFloat(json.asks[1][1]);
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {

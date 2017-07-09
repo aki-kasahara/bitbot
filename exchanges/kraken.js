@@ -139,11 +139,11 @@ module.exports = {
                 var resultMarket = _.keys(data.result),
                     tempData = data.result[resultMarket];
 
-                self.prices.buy.price = parseFloat(tempData.asks[0][0]);
-                self.prices.buy.quantity = parseFloat(tempData.asks[0][1]);
+                self.prices.buy.price = parseFloat(tempData.asks[1][0]);
+                self.prices.buy.quantity = parseFloat(tempData.asks[0][1]) + parseFloat(tempData.asks[1][1]);
 
-                self.prices.sell.price = parseFloat(tempData.bids[0][0]);
-                self.prices.sell.quantity = parseFloat(tempData.bids[0][1]);
+                self.prices.sell.price = parseFloat(tempData.bids[1][0]);
+                self.prices.sell.quantity = parseFloat(tempData.bids[0][1]) + parseFloat(tempData.bids[1][1]);
 
                 console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }

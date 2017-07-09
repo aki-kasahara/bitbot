@@ -5,7 +5,7 @@ var colors      = require('colors'),
     all         = require('promised-io/promise').all,
     utils       = require('./utils'),
     Deferred    = require("promised-io/promise").Deferred,
-    db          = require('./db'),
+    db          = require('./keenioClient'),
     events      = require('events'),
     emitter     = new events.EventEmitter();
 
@@ -39,9 +39,9 @@ module.exports = {
         //'kraken'   : require('./exchanges/kraken'),
         'coincheck'   : require('./exchanges/coincheck'),
         //'btcchina' : require('./exchanges/btcchina'),
-        //'vircurex' : require('./exchanges/vircurex')
+        'zaif' : require('./exchanges/zaif'),
         // 'anxpro'   : require('./exchanges/anxpro')
-        'bitflyer'   : require('./exchanges/bitflyer')
+        //'bitflyer'   : require('./exchanges/bitflyer')
     },
 
     validExchanges: {},
@@ -331,14 +331,12 @@ module.exports = {
         var totalBalances = {};
 
         _.each(this.exchangeMarkets, function (exchange) {
-            _.each(exchange.balances, function (currency, index) {
-                if (currency > 0) {
-                    if (totalBalances[index]) {
-                        totalBalances[index] += currency;
-                    }
-
-                    else {
-                        totalBalances[index] = currency;
+            _.each(exchange.balances, function (val, key) {
+                if (val > 0) {
+                    if (totalBalances[key]) {
+                        totalBalances[key] += val;
+                    } else {
+                        totalBalances[key] = val;
                     }
                 }
             }, this);

@@ -87,9 +87,9 @@ module.exports = {
         var adjusted = self.adjust(type, rate);
         var queryParam = {
           method : "trade",
-          currency_pair: this.market.name,
-          action : adjust.action,
-          price : adjust.price,
+          currency_pair: this.market.name.toLowerCase(),
+          action : adjusted.action,
+          price : adjusted.price,
           amount : amount
         };
         self.requestPrivateAPI(queryParam, function(error, response, body){
@@ -139,11 +139,11 @@ module.exports = {
         request("https://api.zaif.jp/api/1/depth/" + market.toLowerCase(), function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            //2つ目の価格と2つ目までの数量を代入する
-            self.prices.buy.price=json.bids[1][0];
-            self.prices.buy.quantity=json.bids[0][1] + json.bids[1][1];
-            self.prices.sell.price=json.asks[1][0];
-            self.prices.sell.quantity=json.asks[0][1] + json.asks[1][1];
+            //1つ目の価格と1つ目までの数量を代入する
+            self.prices.buy.price=json.bids[0][0];
+            self.prices.buy.quantity=json.bids[0][1];
+            self.prices.sell.price=json.asks[0][0];
+            self.prices.sell.quantity=json.asks[0][1];
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);
@@ -166,7 +166,7 @@ module.exports = {
         //注文したorderの状況を確認する
         var queryParam = {
           method : "active_orders",
-          currency_pair : this.market.name
+          currency_pair : this.market.name.toLowerCase()
         };
         self.requestPrivateAPI(queryParam, function(error, response, body){
           if (!error && response.statusCode == 200){

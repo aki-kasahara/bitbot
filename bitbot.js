@@ -23,7 +23,7 @@ module.exports = {
     ],
 
     minimumProfit: {
-      'BTC_JPY': 10
+      'BTC_JPY': 20
     },
 
     marketIndex: 0,
@@ -60,6 +60,7 @@ module.exports = {
 
         config.market = marketName;
         config.tradeAmount = marketObj[marketName];
+        config.minimumProfit = this.minimumProfit[marketName];
 
         this.populateValidExchanges(marketName);
         this.setExchangesMarket(marketName);
@@ -219,6 +220,21 @@ module.exports = {
             return true;
         } else {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
+            db.registerTradeForInsufficientBalance({
+                market: config.market,
+                ex1: {
+                    name: ex1.name,
+                    buyPrice: ex1.buy,
+                    amount: ex1.amount
+                },
+                ex2: {
+                    name: ex2.name,
+                    sellPrice: ex2.sell,
+                    amount: ex2.amount
+                },
+                finalProfit: arb.finalProfit,
+                when: Date.now()
+            });
             return false;
         }
     },
@@ -244,7 +260,7 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-        console.log("sell price: " + ex2.prices.sell.price + " sell amount: " + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
+        //console.log("sell price: " + ex2.prices.sell.price + " sell amount: " + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
@@ -259,7 +275,6 @@ module.exports = {
             profit,
             smallestDecimal,
             isMinimumAmountViable;
-        var minimumProfit = this.minimumProfit[ex1.market.name];
 
         smallestAmountAvailable = this.getSmallestAmountAvailable(ex1, ex2);
         smallestDecimal = utils.getSmallestDecimal(ex1, ex2);
@@ -283,7 +298,7 @@ module.exports = {
         console.log('final Profit: ', finalProfit);
         console.log('###########'.green);
 
-        if (finalProfit > minimumProfit) {
+        if (finalProfit > config.minimumProfit) {
             return {
                 ex1: {
                     name: ex1.exchangeName,
@@ -298,7 +313,7 @@ module.exports = {
                 finalProfit: finalProfit
             };
         } else {
-            console.log("final Profit isn't more than: ".red + minimumProfit);
+            console.log("final Profit isn't more than: ".red + config.minimumProfit);
             return false;
         }
     },

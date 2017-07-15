@@ -139,12 +139,12 @@ module.exports = {
         request("https://api.zaif.jp/api/1/depth/" + market.toLowerCase(), function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            //1つ目の価格と1つ目までの数量を代入する。一つの取引所内ではsell.price - buy.priceが常に負になるようにする。
-            self.prices.sell.price=json.bids[1][0];
-            self.prices.sell.quantity=json.bids[0][1] + json.bids[1][1];
+            //3つ目の価格と、2つ目と3つ目の数量の平均を代入する。一つの取引所内ではsell.price - buy.priceが常に負になるようにする。
+            self.prices.sell.price=json.bids[2][0];
+            self.prices.sell.quantity=(json.bids[1][1] + json.bids[2][1])/2;
 
-            self.prices.buy.price=json.asks[1][0];
-            self.prices.buy.quantity=json.asks[0][1] + json.asks[1][1];
+            self.prices.buy.price=json.asks[2][0];
+            self.prices.buy.quantity=(json.asks[1][1] + json.asks[2][1])/2;
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);
@@ -199,7 +199,7 @@ module.exports = {
 
     requestPrivateAPI: function(queryString, callback){
       var self = this;
-      queryString.nonce = parseInt(Date.now()/1000, 10);
+      queryString.nonce = Date.now()/1000;
       var text = querystring.stringify(queryString);
       var signed_text = crypto.createHmac('sha512', config.zaif.secret).update(text).digest('hex');
       var options = {

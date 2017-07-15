@@ -123,11 +123,11 @@ module.exports = {
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
             //1つ目の価格と1つ目までの数量を代入する
-            self.prices.sell.price= parseFloat(json.bids[1][0]);
-            self.prices.sell.quantity= parseFloat(json.bids[0][1]) + parseFloat(json.bids[1][1]);
+            self.prices.sell.price= parseFloat(json.bids[2][0]);
+            self.prices.sell.quantity= (parseFloat(json.bids[1][1]) + parseFloat(json.bids[2][1]))/2;
 
-            self.prices.buy.price= parseFloat(json.asks[1][0]);
-            self.prices.buy.quantity= parseFloat(json.asks[0][1]) + parseFloat(json.asks[1][1]);
+            self.prices.buy.price= parseFloat(json.asks[2][0]);
+            self.prices.buy.quantity= (parseFloat(json.asks[1][1]) + parseFloat(json.asks[2][1]))/2;
             console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
             console.log('error: ' + error);
@@ -173,7 +173,7 @@ module.exports = {
 
     requestPrivateAPI: function(method, path, body, callback){
       var self = this;
-      var timestamp = parseInt(Date.now()/1000, 10);
+      var timestamp = new Date().getTime();
       var text = timestamp + self.host + path;
       if (method==="POST"){
         text = text + JSON.stringify(body);

@@ -152,9 +152,9 @@ module.exports = {
           try {deferred.resolve(self);} catch (e){}
         });
 
-        // setTimeout(function () {
-        //     try {deferred.resolve();} catch (e){}
-        // }, config.requestTimeouts.prices);
+        setTimeout(function () {
+            try {deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },

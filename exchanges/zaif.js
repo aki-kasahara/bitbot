@@ -250,17 +250,20 @@ module.exports = {
         var json = JSON.parse(body);
         if (!error && response.statusCode == 200 && (json.success===1)){
           console.log('zaif cancel order SUCCESSFULL '.green);
-          var rate;
-          var type;
-          if (self.activeOrders.type==="bid"){
-            rate = parseInt(self.activeOrders.rate) + 1000;
-            type = "buy";
-          } else if (self.activeOrders.type==="ask"){
-            rate = parseInt(self.activeOrders.rate) - 1000;
-            type = "sell";
+          if (self.activeOrders.amount > self.market.minAmount){
+            var rate;
+            var type;
+            if (self.activeOrders.type==="bid"){
+              rate = parseInt(self.activeOrders.rate) + 1000;
+              type = "buy";
+            } else if (self.activeOrders.type==="ask"){
+              rate = parseInt(self.activeOrders.rate) - 1000;
+              type = "sell";
+            }
+            self.createOrder(config.market, type, rate, self.activeOrders.amount);
+          } else {
+            self.emitter.emit(self.exchangeName + ':orderCreated');
           }
-
-          self.createOrder(config.market, type, rate, self.activeOrders.amount);
         } else {
           console.log('zaif cancel order UNSUCCESSFULL '.red, error);
           self.emitter.emit(self.exchangeName + ':orderCreated');

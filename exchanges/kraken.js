@@ -107,7 +107,7 @@ module.exports = {
                 self.emitter.emit(self.exchangeName + ':orderCreated');
             } else {
                 console.log('KRAKEN error on order: ', err);
-                if (data.error) { console.log('KRAKEN error on order: ', data.error)}
+                if (data) { console.log('KRAKEN error on order: ', JSON.stringify(data));}
                 _.delay(function () {
                     self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
                 }, config.interval);

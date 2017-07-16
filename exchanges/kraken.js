@@ -175,7 +175,7 @@ module.exports = {
                     self.hasOpenOrder = false;
                     self.emitter.emit(self.exchangeName + ':orderMatched');
                 }, config.interval);
-            } else {
+            } else if (data && data.result){
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 _.delay(function () {
                   var txid = _.keys(data.result.open)[0];
@@ -188,6 +188,9 @@ module.exports = {
                   };
                   self.emitter.emit(self.exchangeName + ':orderNotMatched');
                 }, config.interval);
+            } else {
+              console.log('KRAKEN failed to check OpenOrders'.red);
+              self.emitter.emit(self.exchangeName + ':orderCreated');
             }
         });
     }, config.interval),
@@ -198,13 +201,17 @@ module.exports = {
       kraken.api('CancelOrder', {'txid': self.activeOrders.txid}, function (err, data){
         if (!err && data && data.result && (data.result.count === 1)){
           console.log('KRAKEN succeed to cancel order');
-          var rate;
-          if (self.activeOrders.type==="buy"){
-            rate = parseFloat(self.activeOrders.rate) + 1000.0;
-          } else if (self.activeOrders.type==="sell"){
-            rate = parseFloat(self.activeOrders.rate) - 1000.0;
+          if (self.activeOrders.amount > self.market.minAmount){
+            var rate;
+            if (self.activeOrders.type==="buy"){
+              rate = parseFloat(self.activeOrders.rate) + 1000.0;
+            } else if (self.activeOrders.type==="sell"){
+              rate = parseFloat(self.activeOrders.rate) - 1000.0;
+            }
+            self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
+          } else {
+            self.emitter.emit(self.exchangeName + ':orderCreated');
           }
-          self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
         } else {
           console.log('KRAKEN failed to cancel order'.red);
           self.emitter.emit(self.exchangeName + ':orderCreated');

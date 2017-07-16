@@ -230,13 +230,18 @@ module.exports = {
       self.requestPrivateAPI('POST', path, body, function(error, response, body){
         if (!error && response.statusCode == 200){
           console.log('bitflyer cancelchildorder SUCCESSFULL '.green);
-          var rate;
-          if (self.activeOrders.type==="BUY"){
-            rate = parseInt(self.activeOrders.rate) + 1000;
-          } else if (self.activeOrders.type==="SELL"){
-            rate = parseInt(self.activeOrders.rate) - 1000;
+          if (self.activeOrders.amount > self.market.minAmount){
+            var rate;
+            if (self.activeOrders.type==="BUY"){
+              rate = parseInt(self.activeOrders.rate) + 1000;
+            } else if (self.activeOrders.type==="SELL"){
+              rate = parseInt(self.activeOrders.rate) - 1000;
+            }
+            self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
+          } else {
+            self.emitter.emit(self.exchangeName + ':orderCreated');
           }
-          self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
+
         } else {
           console.log('bitflyer cancelchildorder UNSUCCESSFULL '.red, error);
           self.emitter.emit(self.exchangeName + ':orderCreated');

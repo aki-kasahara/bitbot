@@ -20,6 +20,8 @@ module.exports = {
 
     emitter: {},
 
+    activeOrders:{},
+
     balancesMap: {},
 
     hasOpenOrder: false,
@@ -30,8 +32,9 @@ module.exports = {
     },
 
     bindEvents: function () {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
-        this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder', 'executeLossCut');
+        //this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderNotMatched', this.executeLossCut);
         this.emitter.on(this.exchangeName + ':orderMatched', this.fetchBalance);
         this.emitter.on(this.exchangeName + ':orderCreated', this.checkOrderStatus);
         this.emitter.on(this.exchangeName + ':orderNotCreated', this.createOrder);
@@ -143,9 +146,9 @@ module.exports = {
           try {deferred.resolve(self);} catch (e){}
         });
 
-        // setTimeout(function () {
-        //     try {deferred.resolve();} catch (e){}
-        // }, config.requestTimeouts.prices);
+        setTimeout(function () {
+            try {deferred.resolve();} catch (e){}
+        }, config.requestTimeouts.prices);
 
         return deferred.promise;
     },
@@ -167,7 +170,15 @@ module.exports = {
               }, config.interval);
             } else {
               console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-              self.emitter.emit(self.exchangeName + ':orderNotMatched');
+              _.delay(function () {
+                self.activeOrders = {
+                  child_order_id : json[0].child_order_id,
+                  type : json[0].side,
+                  rate : json[0].price,
+                  amount : json[0].outstanding_size
+                };
+                self.emitter.emit(self.exchangeName + ':orderNotMatched');
+              }, config.interval);
             }
           } else {
             console.log('bitflyer checkOrderStatus UNSUCCESSFULL '.red, error);
@@ -204,6 +215,36 @@ module.exports = {
       }
 
       request(options, callback);
+    },
+
+    executeLossCut: function(){
+      var deferred = new Deferred();
+      var self = this;
+      var path = '/v1/me/cancelchildorder';
+      //注文をキャンセルする
+      var body = {
+        "product_code" : self.market.name,
+        "child_order_id" : self.activeOrders.child_order_id
+      };
+      console.log('bitflyer cancel childorder:' + JSON.stringify(self.activeOrders));
+      self.requestPrivateAPI('POST', path, body, function(error, response, body){
+        if (!error && response.statusCode == 200){
+          console.log('bitflyer cancelchildorder SUCCESSFULL '.green);
+          var rate;
+          if (self.activeOrders.type==="BUY"){
+            rate = parseInt(self.activeOrders.rate) + 1000;
+          } else if (self.activeOrders.type==="SELL"){
+            rate = parseInt(self.activeOrders.rate) - 1000;
+          }
+          self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
+        } else {
+          console.log('bitflyer cancelchildorder UNSUCCESSFULL '.red, error);
+          self.emitter.emit(self.exchangeName + ':orderCreated');
+        }
+
+        deferred.resolve(self);
+      });
+      return deferred.promise;
     }
 
 };

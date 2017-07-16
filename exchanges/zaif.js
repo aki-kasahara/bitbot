@@ -18,6 +18,8 @@ module.exports = {
 
     emitter: {},
 
+    activeOrders: {},
+
     balancesMap: {},
 
     hasOpenOrder: false,
@@ -28,8 +30,9 @@ module.exports = {
     },
 
     bindEvents: function () {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
-        this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder', 'executeLossCut');
+        //this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderNotMatched', this.executeLossCut);
         this.emitter.on(this.exchangeName + ':orderMatched', this.fetchBalance);
         this.emitter.on(this.exchangeName + ':orderCreated', this.checkOrderStatus);
         this.emitter.on(this.exchangeName + ':orderNotCreated', this.createOrder);
@@ -163,7 +166,6 @@ module.exports = {
     checkOrderStatus: _.debounce(function () {
         var deferred = new Deferred();
         var self = this;
-        var path = '/v1/me/getchildorders?product_code=' + this.market.name +'&child_order_state=ACTIVE';
         //注文したorderの状況を確認する
         var queryParam = {
           method : "active_orders",
@@ -181,7 +183,17 @@ module.exports = {
                 }, config.interval);
               } else {
                 console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-                self.emitter.emit(self.exchangeName + ':orderNotMatched');
+                _.delay(function () {
+                  var order_id = _.keys(json.return)[0];
+                  var content = json.return[order_id];
+                    self.activeOrders = {
+                      order_id : order_id,
+                      type : content.action,
+                      rate : content.price,
+                      amount : content.amount
+                    };
+                    self.emitter.emit(self.exchangeName + ':orderNotMatched');
+                }, config.interval);
               }
             } else {
               console.log('error: ' + json.error);
@@ -224,5 +236,39 @@ module.exports = {
         return {action:"ask", price: rate + (5 - modResult)};
       }
     },
+
+    executeLossCut: function(){
+      var deferred = new Deferred();
+      var self = this;
+      //注文をキャンセルする
+      var queryParam = {
+        method : "cancel_order",
+        order_id : self.activeOrders.order_id
+      };
+      console.log('zaif cancel order:' + JSON.stringify(self.activeOrders));
+      self.requestPrivateAPI(queryParam, function(error, response, body){
+        var json = JSON.parse(body);
+        if (!error && response.statusCode == 200 && (json.success===1)){
+          console.log('zaif cancel order SUCCESSFULL '.green);
+          var rate;
+          var type;
+          if (self.activeOrders.type==="bid"){
+            rate = parseInt(self.activeOrders.rate) + 1000;
+            type = "buy";
+          } else if (self.activeOrders.type==="ask"){
+            rate = parseInt(self.activeOrders.rate) - 1000;
+            type = "sell";
+          }
+
+          self.createOrder(config.market, type, rate, self.activeOrders.amount);
+        } else {
+          console.log('zaif cancel order UNSUCCESSFULL '.red, error);
+          self.emitter.emit(self.exchangeName + ':orderCreated');
+        }
+
+        deferred.resolve(self);
+      });
+      return deferred.promise;
+    }
 
 };

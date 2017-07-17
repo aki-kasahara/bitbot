@@ -17,13 +17,14 @@ module.exports = {
         //{ 'LTC_BTC': 1 }
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
-        // { 'BTC_EUR': 0.01 }
-        //{ 'ETH_BTC': 0.1 },
-        { 'BTC_JPY': 0.05 }
+        // { 'BTC_EUR': 0.01 },
+        { 'BTC_JPY': 0.01 },
+        //{ 'ETH_BTC': 0.1 }
     ],
 
     minimumProfit: {
-      'BTC_JPY': 20
+      'BTC_JPY': 4,
+      'ETH_BTC': 0.0001
     },
 
     marketIndex: 0,
@@ -61,6 +62,7 @@ module.exports = {
         config.market = marketName;
         config.tradeAmount = marketObj[marketName];
         config.minimumProfit = this.minimumProfit[marketName];
+        config.counter = config.counter;
 
         this.populateValidExchanges(marketName);
         this.setExchangesMarket(marketName);
@@ -220,6 +222,7 @@ module.exports = {
             return true;
         } else {
             console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
+            this.priceLookupCounter = 0;
             db.registerTradeForInsufficientBalance({
                 market: config.market,
                 ex1: {
@@ -260,7 +263,6 @@ module.exports = {
 
     calculateViability: function (ex1, ex2) {
         var isViable = false;
-        //console.log("sell price: " + ex2.prices.sell.price + " sell amount: " + ex2.prices.sell.quantity + " buy price: " + ex1.prices.buy.price + " buy amount: " + ex1.prices.buy.quantity);
         if (ex1.prices.buy.price < ex2.prices.sell.price) {
             isViable = this.calculateAfterFees(ex1, ex2);
         }
@@ -314,6 +316,7 @@ module.exports = {
             };
         } else {
             console.log("final Profit isn't more than: ".red + config.minimumProfit);
+            this.priceLookupCounter = 0;
             return false;
         }
     },

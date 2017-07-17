@@ -17,6 +17,8 @@ module.exports = {
 
     emitter: {},
 
+    activeOrders:{},
+
     balancesMap: {},
 
     hasOpenOrder: false,
@@ -27,8 +29,9 @@ module.exports = {
     },
 
     bindEvents: function () {
-        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder');
-        this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        _.bindAll(this, 'checkOrderStatus', 'fetchBalance', 'createOrder', 'executeLossCut');
+        //this.emitter.on(this.exchangeName + ':orderNotMatched', this.checkOrderStatus);
+        this.emitter.on(this.exchangeName + ':orderNotMatched', this.executeLossCut);
         this.emitter.on(this.exchangeName + ':orderMatched', this.fetchBalance);
         this.emitter.on(this.exchangeName + ':orderCreated', this.checkOrderStatus);
         this.emitter.on(this.exchangeName + ':orderNotCreated', this.createOrder);
@@ -159,7 +162,15 @@ module.exports = {
               }, config.interval);
             } else {
               console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
-              self.emitter.emit(self.exchangeName + ':orderNotMatched');
+              _.delay(function () {
+                  self.activeOrders = {
+                    id : json.orders[0].id,
+                    type : json.orders[0].order_type,
+                    rate : json.orders[0].rate,
+                    amount : parseFloat(json.orders[0].pending_amount)
+                  };
+                  self.emitter.emit(self.exchangeName + ':orderNotMatched');
+              }, config.interval);
             }
           } else {
             console.log('coincheck checkOrderStatus UNSUCCESSFULL '.red, error);
@@ -196,6 +207,38 @@ module.exports = {
       }
 
       request(options, callback);
+    },
+
+    executeLossCut: function(){
+      var deferred = new Deferred();
+      var self = this;
+      var path = '/api/exchange/orders/' + self.activeOrders.id;
+      //注文をキャンセルする
+      console.log('coincheck cancel order:' + JSON.stringify(self.activeOrders));
+      self.requestPrivateAPI('DELETE', path, "undefied", function(error, response, body){
+        var json = JSON.parse(body);
+        if (!error && response.statusCode == 200 && json.success){
+          console.log('coincheck cancel order SUCCESSFULL '.green);
+          if (self.activeOrders.amount > self.market.minAmount){
+            var rate;
+            if (self.activeOrders.type==="buy"){
+              rate = parseInt(self.activeOrders.rate) + 1000;
+            } else if (self.activeOrders.type==="sell"){
+              rate = parseInt(self.activeOrders.rate) - 1000;
+            }
+            self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
+          } else {
+            self.emitter.emit(self.exchangeName + ':orderCreated');
+          }
+
+        } else {
+          console.log('coincheck cancel order UNSUCCESSFULL '.red, error);
+          self.emitter.emit(self.exchangeName + ':orderCreated');
+        }
+
+        deferred.resolve(self);
+      });
+      return deferred.promise;
     }
 
 };

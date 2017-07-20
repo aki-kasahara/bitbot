@@ -23,7 +23,7 @@ module.exports = {
     ],
 
     minimumProfit: {
-      'BTC_JPY': 4,
+      'BTC_JPY': 10,
       'ETH_BTC': 0.0001
     },
 
@@ -325,42 +325,49 @@ module.exports = {
         var ex = this.exchangeMarkets[exName];
 
         db.newExchangeBalance(ex.exchangeName, ex.balances);
-
-        console.log('openTrades: ', this.openTrades);
-
-        _.each(this.openTrades, function (openTrade, idx) {
-            if (openTrade[exName]) {
-                openTrade[exName] = true;
-            }
-
-            var isTradeClosed = _.every(openTrade, function (value, key) {
-                return !!key;
-            }, this);
-
-            if (isTradeClosed) {
-                this.openTrades.splice(idx, 1);
-                this.getTotalBalanceInExchanges();
-            }
-
-        }, this);
+        this.getTotalBalanceInExchanges();
+        // console.log('openTrades: ', this.openTrades);
+        //
+        // _.each(this.openTrades, function (openTrade, idx) {
+        //     if (openTrade[exName]) {
+        //         openTrade[exName] = true;
+        //     }
+        //
+        //     var isTradeClosed = _.every(openTrade, function (value, key) {
+        //         return !!key;
+        //     }, this);
+        //
+        //     if (isTradeClosed) {
+        //         this.openTrades.splice(idx, 1);
+        //         this.getTotalBalanceInExchanges();
+        //     }
+        //
+        // }, this);
     },
 
     getTotalBalanceInExchanges: function () {
         var totalBalances = {};
 
-        _.each(this.exchangeMarkets, function (exchange, name) {
-            _.each(exchange.balances, function (val, key) {
-                if (val > 0) {
-                    if (totalBalances[key]) {
-                        totalBalances[key] += val;
-                    } else {
-                        totalBalances[key] = val;
-                    }
-                }
-            }, this);
-        }, this);
+        var array = _.map(this.exchangeMarkets, function(val, key){
+          return _.isEmpty(val.balances);
+        });
+        var flag = _.every(array, function(element){return !element;});
 
-        db.newTotalBalance(totalBalances);
+        if (flag){
+          _.each(this.exchangeMarkets, function (exchange, name) {
+              _.each(exchange.balances, function (val, key) {
+                  if (val > 0) {
+                      if (totalBalances[key]) {
+                          totalBalances[key] += val;
+                      } else {
+                          totalBalances[key] = val;
+                      }
+                  }
+              }, this);
+          }, this);
+
+          db.newTotalBalance(totalBalances);
+        }
 
         return totalBalances;
     },

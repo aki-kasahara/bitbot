@@ -56,43 +56,16 @@ module.exports = {
     },
 
     newExchangeBalance: function (exchangeName, exchangeBalance) {
-        var currencies = ['btc', 'eth', 'jpy'],
-            balanceArray = [];
-
-        _.each(currencies, function (currency) {
-            var amount = exchangeBalance[currency];
-
-            if (!amount) { amount = 0; }
-
-            balanceArray.push({ currency: currency, amount: amount });
-        }, this);
-
         var balance = {
             name: exchangeName,
-            balances: balanceArray,
-            when: Date.now()
+            balances: exchangeBalance
         };
 
-        client.addEvent("balance", balance);
+        client.addEvent("exchangeBalance", balance);
 
     },
 
     newTotalBalance: function (balances) {
-        var currencies = ['btc', 'eth', 'jpy'],
-            data = [];
-
-        _.each(currencies, function (currency) {
-            data.push({
-                currency: currency,
-                amount: balances[currency]
-            });
-        }, this);
-
-        var totalBalance = {
-            balances: data,
-            when: Date.now()
-        };
-
-        client.addEvent("totalBalance", totalBalance);
+        client.addEvent("allBalance", balances);
     }
 };

@@ -326,23 +326,6 @@ module.exports = {
 
         db.newExchangeBalance(ex.exchangeName, ex.balances);
         this.getTotalBalanceInExchanges();
-        // console.log('openTrades: ', this.openTrades);
-        //
-        // _.each(this.openTrades, function (openTrade, idx) {
-        //     if (openTrade[exName]) {
-        //         openTrade[exName] = true;
-        //     }
-        //
-        //     var isTradeClosed = _.every(openTrade, function (value, key) {
-        //         return !!key;
-        //     }, this);
-        //
-        //     if (isTradeClosed) {
-        //         this.openTrades.splice(idx, 1);
-        //         this.getTotalBalanceInExchanges();
-        //     }
-        //
-        // }, this);
     },
 
     getTotalBalanceInExchanges: function () {

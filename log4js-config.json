@@ -25,6 +25,26 @@
         "default": {
             "appenders": ["bitbot","coincheck","zaif","bitflyer", "kraken"],
             "level": "debug"
+        },
+        "bitbot": {
+            "appenders": ["bitbot"],
+            "level": "debug"
+        },
+        "coincheck": {
+            "appenders": ["coincheck"],
+            "level": "debug"
+        },
+        "zaif": {
+            "appenders": ["zaif"],
+            "level": "debug"
+        },
+        "bitflyer": {
+            "appenders": ["bitflyer"],
+            "level": "debug"
+        },
+        "kraken": {
+            "appenders": ["kraken"],
+            "level": "debug"
         }
     }
 }

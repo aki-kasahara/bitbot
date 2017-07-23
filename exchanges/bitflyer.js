@@ -4,10 +4,14 @@ var colors          = require('colors'),
     config          = require('./../config'),
     utils           = require('../utils'),
     crypto          = require('crypto'),
+    log4js      = require('log4js'),
     request           = require('request');
     //BitflyerClient    = require('bitflyer-client');
 
 //var bitflyer = new BitfleyrClient(config['bitflyer'].apiKey, config['bitflyer'].secret);
+
+log4js.configure('log4js-config.json');
+var logger = log4js.getLogger('bitflyer');
 
 module.exports = {
 
@@ -58,13 +62,12 @@ module.exports = {
               self.balances[balance.currency_code.toLowerCase()] = balance.available;
             });
 
-            console.log('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
+            logger.info('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
 
             self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
 
           } else {
-            console.log('error: ' + error);
-            console.log('Error when checking balance for '.red + self.exchangeName);
+            logger.error('Error when checking balance for '.red + self.exchangeName + " :" + error);
           }
 
           deferred.resolve(self);
@@ -81,7 +84,7 @@ module.exports = {
         //注文を出す処理を実装する
         var self = this;
         this.hasOpenOrder = true;
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
+        logger.info('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
         var body = {
           product_code : this.market.name,
           child_order_type : 'LIMIT',
@@ -92,10 +95,10 @@ module.exports = {
         self.requestPrivateAPI('POST', '/v1/me/sendchildorder', body, function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            console.log("bitflyer child_order_acceptance_id " + json.child_order_acceptance_id);
+            logger.info("bitflyer child_order_acceptance_id " + json.child_order_acceptance_id);
             self.emitter.emit(self.exchangeName + ':orderCreated');
           } else {
-            console.log('bitflyer ORDER UNSUCCESSFULL '.red, body);
+            logger.error('bitflyer ORDER UNSUCCESSFULL '.red, body);
             _.delay(function () {
                 self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
             }, config.interval);
@@ -125,7 +128,7 @@ module.exports = {
             sell : {}
         };
 
-        console.log('Checking prices for '.yellow + this.exchangeName);
+        logger.info('Checking prices for '.yellow + this.exchangeName);
 
         //板から注文情報を取得する処理を実装する
         var getboard_path = '/v1/getboard?product_code=';
@@ -139,9 +142,9 @@ module.exports = {
             self.prices.buy.price=json.asks[2].price;
             self.prices.buy.quantity=(json.asks[1].size + json.asks[2].size)/2;
 
-            console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
-            console.log('error: ' + error);
+            logger.error('error: ' + error);
           }
           try {deferred.resolve(self);} catch (e){}
         });
@@ -163,13 +166,13 @@ module.exports = {
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
             if (_.isEmpty(json)){
-              console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+              logger.info('order for '.green + self.exchangeName + ' filled successfully!'.green);
               _.delay(function () {
                   self.hasOpenOrder = false;
                   self.emitter.emit(self.exchangeName + ':orderMatched');
               }, config.interval);
             } else {
-              console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red);
               _.delay(function () {
                 self.activeOrders = {
                   child_order_id : json[0].child_order_id,
@@ -181,7 +184,7 @@ module.exports = {
               }, config.interval);
             }
           } else {
-            console.log('bitflyer checkOrderStatus UNSUCCESSFULL '.red, error);
+            logger.error('bitflyer checkOrderStatus UNSUCCESSFULL '.red, error);
             self.emitter.emit(self.exchangeName + ':orderNotMatched');
           }
 
@@ -226,10 +229,10 @@ module.exports = {
         "product_code" : self.market.name,
         "child_order_id" : self.activeOrders.child_order_id
       };
-      console.log('bitflyer cancel childorder:' + JSON.stringify(self.activeOrders));
+      logger.info('bitflyer cancel childorder:' + JSON.stringify(self.activeOrders));
       self.requestPrivateAPI('POST', path, body, function(error, response, body){
         if (!error && response.statusCode == 200){
-          console.log('bitflyer cancelchildorder SUCCESSFULL '.green);
+          logger.info('bitflyer cancelchildorder SUCCESSFULL '.green);
           if (self.activeOrders.amount > self.market.minAmount){
             var rate;
             if (self.activeOrders.type==="BUY"){
@@ -243,7 +246,7 @@ module.exports = {
           }
 
         } else {
-          console.log('bitflyer cancelchildorder UNSUCCESSFULL '.red, error);
+          logger.error('bitflyer cancelchildorder UNSUCCESSFULL '.red, error);
           self.emitter.emit(self.exchangeName + ':orderCreated');
         }
 

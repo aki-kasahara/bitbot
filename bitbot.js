@@ -7,7 +7,11 @@ var colors      = require('colors'),
     Deferred    = require("promised-io/promise").Deferred,
     db          = require('./keenioClient'),
     events      = require('events'),
+    log4js      = require('log4js'),
     emitter     = new events.EventEmitter();
+
+    log4js.configure('log4js-config.json');
+    var logger = log4js.getLogger('bitbot');
 
 module.exports = {
 
@@ -23,7 +27,7 @@ module.exports = {
     ],
 
     minimumProfit: {
-      'BTC_JPY': 10,
+      'BTC_JPY': 30,
       'ETH_BTC': 0.0001
     },
 
@@ -48,6 +52,7 @@ module.exports = {
     validExchanges: {},
 
     initialize: function () {
+        logger.info('initialization start');
         db.initialize();
         this.bindEvents();
         this.initializeExchanges();
@@ -138,7 +143,7 @@ module.exports = {
         }, this);
 
         all(promises).then(function (array) {
-            console.log('*** Finished Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
+            logger.info('*** Finished Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
             var list = self.getMarketsWithoutOpenOrders();
             result = self.calculateArbOpportunity(list);
 
@@ -155,12 +160,12 @@ module.exports = {
 
         this.priceLookupCounter = 0;
 
-        console.log("\007");
-        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
-        console.log('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
-        console.log('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.name);
-        console.log('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
-        console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+        logger.info("\007");
+        logger.info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
+        logger.info('Buy: '.green, ex1.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex1.buy + ' in '.green + ex1.name);
+        logger.info('Sell: '.green, ex2.amount + ' ' + config.market.split("_")[0] + ' for '.green + ex2.sell + ' in '.green + ex2.name);
+        logger.info('Profit: '.green + arb.finalProfit + ' ' + config.market.split("_")[1]);
+        logger.info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'.green);
 
         this.validExchanges[ex1.name].createOrder(config.market, 'buy', ex1.buy, ex1.amount);
         this.validExchanges[ex2.name].createOrder(config.market, 'sell', ex2.sell, ex2.amount);
@@ -202,7 +207,7 @@ module.exports = {
         this.priceLookupCounter = this.priceLookupCounter + 1;
 
         if (this.priceLookupCounter > config.counter) {
-            console.log("&&&&&&&&&&&&&&& SWITCHING MARKETS &&&&&&&&&&&&&&&".yellow);
+            logger.info("&&&&&&&&&&&&&&& SWITCHING MARKETS &&&&&&&&&&&&&&&".yellow);
             this.marketIndex = this.marketIndex + 1;
             this.priceLookupCounter = 0;
             this.setupMarket();
@@ -218,10 +223,10 @@ module.exports = {
             balanceToSell = this.validExchanges[ex2.name].balances[config.market.split("_")[0].toLowerCase()] || 0;
 
         if (balanceToBuy > (ex1.buy * ex1.amount) && balanceToSell > ex2.amount) {
-            console.log('Cool! There is enough balance to perform the transaction!'.green);
+            logger.info('Cool! There is enough balance to perform the transaction!'.green);
             return true;
         } else {
-            console.log("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
+            logger.info("Oh noes! You don't have enough balance to perform this trade. Restarting... :(".red);
             this.priceLookupCounter = 0;
             db.registerTradeForInsufficientBalance({
                 market: config.market,
@@ -285,7 +290,7 @@ module.exports = {
 
         if(!isMinimumAmountViable){
           //十分な出来高がない場合処理を終了する
-          console.log("amount is not viable".red);
+          logger.info("amount is not viable".red);
           return false;
         }
 
@@ -294,11 +299,11 @@ module.exports = {
 
         finalProfit = +(profit.profit - cost.cost).toFixed(8);
 
-        console.log('###########'.green);
-        console.log(ex1.exchangeName + ' profit: '.green, profit.profit);
-        console.log(ex2.exchangeName + ' cost: '.green, cost.cost);
-        console.log('final Profit: ', finalProfit);
-        console.log('###########'.green);
+        logger.info('###########'.green);
+        logger.info(ex1.exchangeName + ' profit: '.green, profit.profit);
+        logger.info(ex2.exchangeName + ' cost: '.green, cost.cost);
+        logger.info('final Profit: ', finalProfit);
+        logger.info('###########'.green);
 
         if (finalProfit > config.minimumProfit) {
             return {
@@ -315,7 +320,7 @@ module.exports = {
                 finalProfit: finalProfit
             };
         } else {
-            console.log("final Profit isn't more than: ".red + config.minimumProfit);
+            logger.info("final Profit isn't more than: ".red + config.minimumProfit);
             this.priceLookupCounter = 0;
             return false;
         }
@@ -374,7 +379,7 @@ module.exports = {
         if (amount >= minEx1 && amount >= minEx2) {
             return true;
         } else {
-            console.log('not enough liquidity in exchanges to match order immediately'.red);
+            logger.info('not enough liquidity in exchanges to match order immediately'.red);
             return false;
         }
     }

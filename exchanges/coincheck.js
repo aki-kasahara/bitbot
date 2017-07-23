@@ -3,8 +3,12 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
+    log4js          = require('log4js'),
     crypto          = require('crypto'),
     request         = require('request');
+
+    log4js.configure('log4js-config.json');
+    var logger = log4js.getLogger('coincheck');
 
 module.exports = {
 
@@ -53,13 +57,12 @@ module.exports = {
             self.balances.jpy = parseFloat(json.jpy) - parseFloat(json.jpy_reserved);
             self.balances.btc = parseFloat(json.btc) - parseFloat(json.btc_reserved);
 
-            console.log('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
+            logger.info('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
 
             self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
 
           } else {
-            console.log('error: ' + body.error);
-            console.log('Error when checking balance for '.red + self.exchangeName);
+            logger.error('Error when checking balance for '.red + self.exchangeName + " :" + body.error);
           }
 
           deferred.resolve(self);
@@ -76,7 +79,7 @@ module.exports = {
         //注文を出す処理を実装する
         var self = this;
         this.hasOpenOrder = true;
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
+        logger.info('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
         var body = {
           pair : this.market.name.toLowerCase(),
           order_type : type,
@@ -86,10 +89,10 @@ module.exports = {
         self.requestPrivateAPI('POST', '/api/exchange/orders', body, function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            console.log("coincheck order id " + json.id);
+            logger.info("coincheck order id " + json.id);
             self.emitter.emit(self.exchangeName + ':orderCreated');
           } else {
-            console.log('coincheck ORDER UNSUCCESSFULL '.red, body);
+            logger.error('coincheck ORDER UNSUCCESSFULL '.red, body);
             _.delay(function () {
                 self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
             }, config.interval);
@@ -119,7 +122,7 @@ module.exports = {
             sell : {}
         };
 
-        console.log('Checking prices for '.yellow + this.exchangeName);
+        logger.info('Checking prices for '.yellow + this.exchangeName);
 
         //板から注文情報を取得する処理を実装する
         request(self.host + '/api/order_books', function(error, response, body){
@@ -131,9 +134,9 @@ module.exports = {
 
             self.prices.buy.price= parseFloat(json.asks[2][0]);
             self.prices.buy.quantity= (parseFloat(json.asks[1][1]) + parseFloat(json.asks[2][1]))/2;
-            console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
           } else {
-            console.log('error: ' + error);
+            logger.error('error: ' + error);
           }
           try {deferred.resolve(self);} catch (e){}
         });
@@ -155,13 +158,13 @@ module.exports = {
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
             if (_.isEmpty(json.orders)){
-              console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+              logger.info('order for '.green + self.exchangeName + ' filled successfully!'.green);
               _.delay(function () {
                   self.hasOpenOrder = false;
                   self.emitter.emit(self.exchangeName + ':orderMatched');
               }, config.interval);
             } else {
-              console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red);
               _.delay(function () {
                   self.activeOrders = {
                     id : json.orders[0].id,
@@ -173,7 +176,7 @@ module.exports = {
               }, config.interval);
             }
           } else {
-            console.log('coincheck checkOrderStatus UNSUCCESSFULL '.red, error);
+            logger.error('coincheck checkOrderStatus UNSUCCESSFULL '.red, error);
             self.emitter.emit(self.exchangeName + ':orderNotMatched');
           }
 
@@ -214,11 +217,11 @@ module.exports = {
       var self = this;
       var path = '/api/exchange/orders/' + self.activeOrders.id;
       //注文をキャンセルする
-      console.log('coincheck cancel order:' + JSON.stringify(self.activeOrders));
+      logger.info('coincheck cancel order:' + JSON.stringify(self.activeOrders));
       self.requestPrivateAPI('DELETE', path, "undefied", function(error, response, body){
         var json = JSON.parse(body);
         if (!error && response.statusCode == 200 && json.success){
-          console.log('coincheck cancel order SUCCESSFULL '.green);
+          logger.info('coincheck cancel order SUCCESSFULL '.green);
           if (self.activeOrders.amount > self.market.minAmount){
             var rate;
             if (self.activeOrders.type==="buy"){
@@ -232,7 +235,7 @@ module.exports = {
           }
 
         } else {
-          console.log('coincheck cancel order UNSUCCESSFULL '.red, error);
+          logger.error('coincheck cancel order UNSUCCESSFULL '.red, error);
           self.emitter.emit(self.exchangeName + ':orderCreated');
         }
 

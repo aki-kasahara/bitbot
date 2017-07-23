@@ -3,7 +3,11 @@ var colors          = require('colors'),
     Deferred        = require("promised-io/promise").Deferred,
     config          = require('./../config'),
     utils           = require('../utils'),
+    log4js          = require('log4js'),
     KrakenClient    = require('kraken-api');
+
+    log4js.configure('log4js-config.json');
+    var logger = log4js.getLogger('kraken');
 
 var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret);
 
@@ -61,13 +65,12 @@ module.exports = {
                     self.balances[self.balancesMap[idx]] = +balance;
                 });
 
-                console.log('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
+                logger.info('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
 
                 self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
             }
             else {
-                console.log(err);
-                console.log('Error when checking balance for '.red + self.exchangeName);
+                logger.error('Error when checking balance for '.red + self.exchangeName + " :" + err);
             }
 
             try {deferred.resolve(self);} catch (e) {}
@@ -93,7 +96,7 @@ module.exports = {
 
         this.hasOpenOrder = true;
 
-        console.log('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
+        logger.info('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
 
         kraken.api('AddOrder', {
             pair: this.market.name,
@@ -103,11 +106,11 @@ module.exports = {
             volume: amount
         }, function (err, data) {
             if (!err && _.isEmpty(data.error)) {
-                console.log('KRAKEN resolved successfully! ' + data.result.txid[0]);
+                logger.info('KRAKEN resolved successfully! ' + data.result.txid[0]);
                 self.emitter.emit(self.exchangeName + ':orderCreated');
             } else {
-                console.log('KRAKEN error on order: ', err);
-                if (data) { console.log('KRAKEN error on order: ', JSON.stringify(data));}
+                logger.error('KRAKEN error on order: ', err);
+                if (data) { logger.error('KRAKEN error on order: ', JSON.stringify(data));}
                 _.delay(function () {
                     self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
                 }, config.interval);
@@ -135,7 +138,7 @@ module.exports = {
             sell : {}
         };
 
-        console.log('Checking prices for '.yellow + this.exchangeName);
+        logger.info('Checking prices for '.yellow + this.exchangeName);
 
         kraken.api('Depth', {'pair': market, 'count': 10}, function (err, data) {
             if (!err) {
@@ -148,10 +151,10 @@ module.exports = {
                 self.prices.sell.price = parseFloat(tempData.bids[2][0]);
                 self.prices.sell.quantity = parseFloat(tempData.bids[1][1]) + parseFloat(tempData.bids[2][1]);
 
-                console.log('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+                logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
             }
             else {
-                console.log('Error! Failed to get prices for ' + self.exchangeName);
+                logger.error('Error! Failed to get prices for ' + self.exchangeName);
             }
 
             try {deferred.resolve(self);} catch (e){}
@@ -168,15 +171,15 @@ module.exports = {
         var self = this;
 
         kraken.api('OpenOrders', null, function (err, data) {
-            console.log('KRAKEN OPEN ORDERS: ', data);
+            logger.info('KRAKEN OPEN ORDERS: ', data);
             if (!err && data && data.result && _.isEmpty(data.result.open)) {
-                console.log('order for '.green + self.exchangeName + ' filled successfully!'.green);
+                logger.info('order for '.green + self.exchangeName + ' filled successfully!'.green);
                 _.delay(function () {
                     self.hasOpenOrder = false;
                     self.emitter.emit(self.exchangeName + ':orderMatched');
                 }, config.interval);
             } else if (data && data.result){
-                console.log('order for '.red + self.exchangeName + ' not filled yet!'.red);
+                logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red);
                 _.delay(function () {
                   var txid = _.keys(data.result.open)[0];
                   var content = data.result.open[txid];
@@ -189,7 +192,7 @@ module.exports = {
                   self.emitter.emit(self.exchangeName + ':orderNotMatched');
                 }, config.interval);
             } else {
-              console.log('KRAKEN failed to check OpenOrders'.red);
+              logger.error('KRAKEN failed to check OpenOrders'.red);
               self.emitter.emit(self.exchangeName + ':orderCreated');
             }
         });
@@ -197,10 +200,10 @@ module.exports = {
 
     executeLossCut: function(){
       var self = this;
-      console.log('KRAKEN cancel order:' + JSON.stringify(self.activeOrders));
+      logger.info('KRAKEN cancel order:' + JSON.stringify(self.activeOrders));
       kraken.api('CancelOrder', {'txid': self.activeOrders.txid}, function (err, data){
         if (!err && data && data.result && (data.result.count === 1)){
-          console.log('KRAKEN succeed to cancel order');
+          logger.info('KRAKEN succeed to cancel order');
           if (self.activeOrders.amount > self.market.minAmount){
             var rate;
             if (self.activeOrders.type==="buy"){
@@ -213,7 +216,7 @@ module.exports = {
             self.emitter.emit(self.exchangeName + ':orderCreated');
           }
         } else {
-          console.log('KRAKEN failed to cancel order'.red);
+          logger.error('KRAKEN failed to cancel order'.red);
           self.emitter.emit(self.exchangeName + ':orderCreated');
         }
       });

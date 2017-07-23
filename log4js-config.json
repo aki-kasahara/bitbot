@@ -3,12 +3,28 @@
         "bitbot": {
             "type": "dateFile",
             "filename": "log/bitbot.log"
+        },
+        "coincheck": {
+            "type": "dateFile",
+            "filename": "log/coincheck.log"
+        },
+        "zaif": {
+            "type": "dateFile",
+            "filename": "log/zaif.log"
+        },
+        "bitflyer": {
+            "type": "dateFile",
+            "filename": "log/bitflyer.log"
+        },
+        "kraken": {
+            "type": "dateFile",
+            "filename": "log/kraken.log"
         }
     },
     "categories": {
         "default": {
-            "appenders": ["bitbot"],
-            "level": "info"
+            "appenders": ["bitbot","coincheck","zaif","bitflyer", "kraken"],
+            "level": "debug"
         }
     }
 }

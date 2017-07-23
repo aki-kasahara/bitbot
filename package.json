@@ -13,6 +13,7 @@
     "request": "2.81.0",
     "jasmine-node": "1.11.0",
     "node-coincheck":"0.2.1",
-    "keen-js":"3.4.1"
+    "keen-js":"3.4.1",
+    "log4js":"2.2.0"
   }
 }

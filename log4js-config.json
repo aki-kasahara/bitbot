@@ -1,0 +1,14 @@
+{
+    "appenders": {
+        "bitbot": {
+            "type": "dateFile",
+            "filename": "log/bitbot.log"
+        }
+    },
+    "categories": {
+        "default": {
+            "appenders": ["bitbot"],
+            "level": "info"
+        }
+    }
+}

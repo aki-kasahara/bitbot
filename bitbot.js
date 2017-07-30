@@ -22,12 +22,12 @@ module.exports = {
         // { 'NMC_BTC': 0.1 }
         // { 'NMC_USD': 0.1 },
         // { 'BTC_EUR': 0.01 },
-        { 'BTC_JPY': 0.01 },
+        { 'BTC_JPY': 0.02 },
         //{ 'ETH_BTC': 0.1 }
     ],
 
     minimumProfit: {
-      'BTC_JPY': 30,
+      'BTC_JPY': 40,
       'ETH_BTC': 0.0001
     },
 

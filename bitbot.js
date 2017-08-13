@@ -328,7 +328,7 @@ module.exports = {
 
     onExchangeBalanceFetched: function (exName) {
         var ex = this.exchangeMarkets[exName];
-
+        logger.info(ex.exchangeName + " balance is " + ex.balances);
         db.newExchangeBalance(ex.exchangeName, ex.balances);
         this.getTotalBalanceInExchanges();
     },

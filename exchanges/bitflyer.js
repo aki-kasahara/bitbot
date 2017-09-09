@@ -30,9 +30,12 @@ module.exports = {
 
     hasOpenOrder: false,
 
+    health: "NORMAL",
+
     initialize: function (emitter) {
         this.emitter = emitter;
         this.bindEvents();
+        this.checkHealth();
     },
 
     bindEvents: function () {
@@ -128,30 +131,37 @@ module.exports = {
             sell : {}
         };
 
-        logger.info('Checking prices for '.yellow + this.exchangeName);
+        if(this.health === "NORMAL"){
+          logger.info('Checking prices for '.yellow + this.exchangeName);
 
-        //板から注文情報を取得する処理を実装する
-        var getboard_path = '/v1/getboard?product_code=';
-        request(self.host + getboard_path + market, function(error, response, body){
-          if (!error && response.statusCode == 200){
-            var json = JSON.parse(body);
-            //2つ目の価格と２つ目までの数量を代入する
-            self.prices.sell.price=json.bids[2].price;
-            self.prices.sell.quantity=(json.bids[1].size + json.bids[2].size)/2;
+          //板から注文情報を取得する処理を実装する
+          var getboard_path = '/v1/getboard?product_code=';
+          request(self.host + getboard_path + market, function(error, response, body){
+            if (!error && response.statusCode == 200){
+              var json = JSON.parse(body);
+              //2つ目の価格と２つ目までの数量を代入する
+              self.prices.sell.price=json.bids[2].price;
+              self.prices.sell.quantity=(json.bids[1].size + json.bids[2].size)/2;
 
-            self.prices.buy.price=json.asks[2].price;
-            self.prices.buy.quantity=(json.asks[1].size + json.asks[2].size)/2;
+              self.prices.buy.price=json.asks[2].price;
+              self.prices.buy.quantity=(json.asks[1].size + json.asks[2].size)/2;
 
-            logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-          } else {
-            logger.error('error: ' + error);
-          }
+              logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
+            } else {
+              logger.error('error: ' + error);
+            }
+            try {deferred.resolve(self);} catch (e){}
+          });
+
+          setTimeout(function () {
+              try {deferred.resolve();} catch (e){}
+          }, config.requestTimeouts.prices);
+
+        } else {
+          logger.info(self.exchangeName + ' health is busy. Skip to get exchange info.');
           try {deferred.resolve(self);} catch (e){}
-        });
-
-        setTimeout(function () {
-            try {deferred.resolve();} catch (e){}
-        }, config.requestTimeouts.prices);
+        }
+        this.checkHealth();
 
         return deferred.promise;
     },
@@ -252,6 +262,28 @@ module.exports = {
 
         deferred.resolve(self);
       });
+      return deferred.promise;
+    },
+
+    checkHealth: function(){
+      var deferred = new Deferred();
+      var self = this;
+
+      var gethealth_path = '/v1/gethealth';
+      request(self.host + gethealth_path, function(error, response, body){
+        if (!error && response.statusCode == 200){
+          var json = JSON.parse(body);
+          self.health = json.status;
+        } else {
+          logger.error('error: ' + error);
+        }
+        try {deferred.resolve(self);} catch (e){}
+      });
+
+      setTimeout(function () {
+          try {deferred.resolve();} catch (e){}
+      }, config.requestTimeouts.prices);
+
       return deferred.promise;
     }
 

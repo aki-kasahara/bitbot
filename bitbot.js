@@ -26,9 +26,15 @@ module.exports = {
         //{ 'ETH_BTC': 0.1 }
     ],
 
-    minimumProfit: {
-      'BTC_JPY': 40,
-      'ETH_BTC': 0.0001
+    profitLimit: {
+      'BTC_JPY': {
+        'min' : 40,
+        'max' : 1000
+      },
+      'ETH_BTC': {
+        'min' : 0.0001,
+        'max' : 0.0025
+      }
     },
 
     marketIndex: 0,
@@ -66,7 +72,8 @@ module.exports = {
 
         config.market = marketName;
         config.tradeAmount = marketObj[marketName];
-        config.minimumProfit = this.minimumProfit[marketName];
+        config.minimumProfit = this.profitLimit[marketName].min;
+        config.maximumProfit = this.profitLimit[marketName].max;
         config.counter = config.counter;
 
         this.populateValidExchanges(marketName);
@@ -305,7 +312,7 @@ module.exports = {
         logger.info('final Profit: ', finalProfit);
         logger.info('###########'.green);
 
-        if (finalProfit > config.minimumProfit) {
+        if (finalProfit > config.minimumProfit && finalProfit < config.maximumProfit) {
             return {
                 ex1: {
                     name: ex1.exchangeName,
@@ -320,7 +327,7 @@ module.exports = {
                 finalProfit: finalProfit
             };
         } else {
-            logger.info("final Profit isn't more than: ".red + config.minimumProfit);
+            logger.info("final Profit don't fall between ".red + config.minimumProfit + " and ".red + config.maximumProfit);
             this.priceLookupCounter = 0;
             return false;
         }

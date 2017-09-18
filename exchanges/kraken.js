@@ -9,7 +9,7 @@ var colors          = require('colors'),
     log4js.configure('log4js-config.json');
     var logger = log4js.getLogger('kraken');
 
-var options = {"timeout": 10000};
+var options = {"timeout": 15000};
 var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret, options);
 
 module.exports = {
@@ -106,17 +106,14 @@ module.exports = {
             price: newRate,
             volume: amount
         }, function (err, data) {
-            if (!err && _.isEmpty(data.error)) {
+            if (!err || err.code==="ETIMEDOUT") {
                 logger.info('KRAKEN resolved successfully! ' + data.result.txid[0]);
                 self.emitter.emit(self.exchangeName + ':orderCreated');
             } else {
                 logger.error('KRAKEN error on order: ', err);
-                if (err.code!=="ETIMEDOUT"){
-                  //タイムアウトでないとき、注文を再度行う。
-                  _.delay(function () {
-                      self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
-                  }, config.interval);
-                }
+                _.delay(function () {
+                  self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+                }, config.interval);
             }
         });
     },

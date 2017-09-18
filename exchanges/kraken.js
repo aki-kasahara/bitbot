@@ -9,7 +9,8 @@ var colors          = require('colors'),
     log4js.configure('log4js-config.json');
     var logger = log4js.getLogger('kraken');
 
-var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret, options, {"timeout": 10000});
+var options = {"timeout": 10000};
+var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret, options);
 
 module.exports = {
 

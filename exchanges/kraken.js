@@ -9,7 +9,7 @@ var colors          = require('colors'),
     log4js.configure('log4js-config.json');
     var logger = log4js.getLogger('kraken');
 
-var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret);
+var kraken = new KrakenClient(config['kraken'].apiKey, config['kraken'].secret, options, {"timeout": 10000});
 
 module.exports = {
 
@@ -110,10 +110,12 @@ module.exports = {
                 self.emitter.emit(self.exchangeName + ':orderCreated');
             } else {
                 logger.error('KRAKEN error on order: ', err);
-                if (data) { logger.error('KRAKEN error on order: ', JSON.stringify(data));}
-                _.delay(function () {
-                    self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
-                }, config.interval);
+                if (err.code!=="ETIMEDOUT"){
+                  //タイムアウトでないとき、注文を再度行う。
+                  _.delay(function () {
+                      self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+                  }, config.interval);
+                }
             }
         });
     },
@@ -152,8 +154,7 @@ module.exports = {
                 self.prices.sell.quantity = parseFloat(tempData.bids[1][1]) + parseFloat(tempData.bids[2][1]);
 
                 logger.info('Exchange prices for ' + self.exchangeName + ' fetched successfully!');
-            }
-            else {
+            } else {
                 logger.error('Error! Failed to get prices for ' + self.exchangeName);
             }
 

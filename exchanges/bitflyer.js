@@ -103,7 +103,8 @@ module.exports = {
           } else {
             logger.error('bitflyer ORDER UNSUCCESSFULL '.red, body);
             _.delay(function () {
-                self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+                //self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
+                self.emitter.emit(self.exchangeName + ':orderCreated');
             }, config.interval);
           }
 

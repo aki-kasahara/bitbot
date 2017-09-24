@@ -247,9 +247,9 @@ module.exports = {
           if (self.activeOrders.amount > self.market.minAmount){
             var rate;
             if (self.activeOrders.type==="BUY"){
-              rate = parseInt(self.activeOrders.rate) + 1000;
+              rate = parseInt(self.activeOrders.rate) + 4000;
             } else if (self.activeOrders.type==="SELL"){
-              rate = parseInt(self.activeOrders.rate) - 1000;
+              rate = parseInt(self.activeOrders.rate) - 4000;
             }
             self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
           } else {

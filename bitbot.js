@@ -49,6 +49,7 @@ module.exports = {
         //'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
         'coincheck'   : require('./exchanges/coincheck'),
+        'quoine'   : require('./exchanges/quoine'),
         //'btcchina' : require('./exchanges/btcchina'),
         'zaif' : require('./exchanges/zaif'),
         // 'anxpro'   : require('./exchanges/anxpro')

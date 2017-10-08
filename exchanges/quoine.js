@@ -54,22 +54,28 @@ module.exports = {
 
         this.balances = {};
 
-        // self.requestPrivateAPI('GET', '/api/accounts/balance', "undefined", function(error, response, body){
-        //   if (response.statusCode == 200){
-        //     var json = JSON.parse(body);
-        //     self.balances.jpy = parseFloat(json.jpy) - parseFloat(json.jpy_reserved);
-        //     self.balances.btc = parseFloat(json.btc) - parseFloat(json.btc_reserved);
-        //
-        //     logger.info('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
-        //
-        //     self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
-        //
-        //   } else {
-        //     logger.error('Error when checking balance for '.red + self.exchangeName + " :" + body.error);
-        //   }
-        //
-        //   deferred.resolve(self);
-        // });
+        self.requestPrivateAPI('GET', '/crypto_accounts', "undefined", function(error, response, body){
+          if (response.statusCode == 200){
+            var json = JSON.parse(body);
+            var jpy = _.find(json, function(num){
+              return num.currency === "JPY";
+            });
+            var btc = _.find(json, function(num){
+              return num.currency === "BTC";
+            });
+            self.balances.jpy = parseFloat(jpy.balance);
+            self.balances.btc = parseFloat(btc.balance);
+
+            logger.info('Balance for '.green + self.exchangeName + ' fetched successfully '.green + JSON.stringify(self.balances));
+
+            self.emitter.emit('exchangeBalanceFetched', self.exchangeName);
+
+          } else {
+            logger.error('Error when checking balance for '.red + self.exchangeName + " :" + body.error);
+          }
+
+          deferred.resolve(self);
+        });
 
         setTimeout(function () {
             try {
@@ -88,18 +94,19 @@ module.exports = {
         this.hasOpenOrder = true;
         logger.info('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
         var body = {
-          pair : this.market.name.toLowerCase(),
-          order_type : type,
-          rate : rate,
-          amount : amount
-        };
-        self.requestPrivateAPI('POST', '/api/exchange/orders', body, function(error, response, body){
+          order_type : "limit",
+          product_id : balancesMap[this.market.name],
+          side : type,
+          quantity : amount,
+          price : rate
+        }
+        self.requestPrivateAPI('POST', '/orders', body, function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            logger.info("coincheck order id " + json.id);
+            logger.info("quoine order id " + json.id);
             self.emitter.emit(self.exchangeName + ':orderCreated');
           } else {
-            logger.error('coincheck ORDER UNSUCCESSFULL '.red, body);
+            logger.error('quoine ORDER UNSUCCESSFULL '.red, body);
             _.delay(function () {
                 self.emitter.emit(self.exchangeName + ':orderNotCreated', market, type, rate, amount);
             }, config.interval);
@@ -165,12 +172,12 @@ module.exports = {
     checkOrderStatus: _.debounce(function () {
         var deferred = new Deferred();
         var self = this;
-        var path = '/api/exchange/orders/opens';
+        var path = '/orders?status=live';
         //注文したorderの状況を確認する
         self.requestPrivateAPI('GET', path, "undefined", function(error, response, body){
           if (!error && response.statusCode == 200){
             var json = JSON.parse(body);
-            if (_.isEmpty(json.orders)){
+            if (_.isEmpty(json.models)){
               logger.info('order for '.green + self.exchangeName + ' filled successfully!'.green);
               _.delay(function () {
                   self.hasOpenOrder = false;
@@ -180,16 +187,16 @@ module.exports = {
               logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red);
               _.delay(function () {
                   self.activeOrders = {
-                    id : json.orders[0].id,
-                    type : json.orders[0].order_type,
-                    rate : json.orders[0].rate,
-                    amount : parseFloat(json.orders[0].pending_amount)
+                    id : json.models[0].id,
+                    side : json.models[0].side,
+                    price : json.models[0].price,
+                    quantity : parseFloat(json.models[0].quantity)
                   };
                   self.emitter.emit(self.exchangeName + ':orderNotMatched');
               }, config.interval);
             }
           } else {
-            logger.error('coincheck checkOrderStatus UNSUCCESSFULL '.red, error);
+            logger.error('quoine checkOrderStatus UNSUCCESSFULL '.red, error);
             self.emitter.emit(self.exchangeName + ':orderNotMatched');
           }
 
@@ -217,7 +224,7 @@ module.exports = {
         }
       };
 
-      if (method==="POST"){
+      if (method==="POST" && method==="PUT"){
         options.body = JSON.stringify(body);
       }
 
@@ -227,30 +234,26 @@ module.exports = {
     executeLossCut: function(){
       var deferred = new Deferred();
       var self = this;
-      var path = '/api/exchange/orders/' + self.activeOrders.id;
-      //注文をキャンセルする
-      logger.info('coincheck cancel order:' + JSON.stringify(self.activeOrders));
-      self.requestPrivateAPI('DELETE', path, "undefied", function(error, response, body){
+      var path = '/orders/' + self.activeOrders.id;
+      //注文を編集する
+      logger.info('quoine edit order:' + JSON.stringify(self.activeOrders));
+      var price;
+      if (self.activeOrders.side==="buy"){
+        price = parseInt(self.activeOrders.price) + 4000;
+      } else if (self.activeOrders.side==="sell"){
+        price = parseInt(self.activeOrders.price) - 4000;
+      }
+      var body = {
+        price : price
+      };
+      self.requestPrivateAPI('PUT', path, body, function(error, response, body){
         var json = JSON.parse(body);
-        if (!error && response.statusCode == 200 && json.success){
-          logger.info('coincheck cancel order SUCCESSFULL '.green);
-          if (self.activeOrders.amount > self.market.minAmount){
-            var rate;
-            if (self.activeOrders.type==="buy"){
-              rate = parseInt(self.activeOrders.rate) + 4000;
-            } else if (self.activeOrders.type==="sell"){
-              rate = parseInt(self.activeOrders.rate) - 4000;
-            }
-            self.createOrder(config.market, self.activeOrders.type, rate, self.activeOrders.amount);
-          } else {
-            self.emitter.emit(self.exchangeName + ':orderCreated');
-          }
-
+        if (!error && response.statusCode == 200){
+          logger.info('quoine edit order SUCCESSFULL '.green);
         } else {
-          logger.error('coincheck cancel order UNSUCCESSFULL '.red, error);
-          self.emitter.emit(self.exchangeName + ':orderCreated');
+          logger.error('quoine edit order UNSUCCESSFULL '.red, error);
         }
-
+        self.emitter.emit(self.exchangeName + ':orderCreated');
         deferred.resolve(self);
       });
       return deferred.promise;

@@ -54,7 +54,7 @@ module.exports = {
 
         this.balances = {};
 
-        self.requestPrivateAPI('GET', '/crypto_accounts', "undefined", function(error, response, body){
+        self.requestPrivateAPI('GET', '/accounts/balance', "undefined", function(error, response, body){
           if (response.statusCode == 200){
             var json = JSON.parse(body);
             var jpy = _.find(json, function(num){

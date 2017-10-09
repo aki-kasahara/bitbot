@@ -183,7 +183,7 @@ module.exports = {
                   self.emitter.emit(self.exchangeName + ':orderMatched');
               }, config.interval);
             } else {
-              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red);
+              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red + json);
               _.delay(function () {
                 self.activeOrders = {
                   child_order_id : json[0].child_order_id,

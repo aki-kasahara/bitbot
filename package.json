@@ -6,16 +6,18 @@
     "start": "node app.js"
   },
   "dependencies": {
-    "express": "3.4.4",
     "btce": "0.4.2",
-    "promised-io": "0.3.4",
-    "underscore": "1.5.2",
-    "request": "2.81.0",
-    "jasmine-node": "1.11.0",
-    "node-coincheck": "0.2.1",
-    "keen-js": "3.4.1",
-    "log4js": "2.2.0",
     "colors": "0.6.2",
-    "kraken-api": "1.0.0"
+    "express": "3.4.4",
+    "jasmine-node": "1.11.0",
+    "jsonwebtoken": "^8.0.1",
+    "keen-js": "3.4.1",
+    "kraken-api": "1.0.0",
+    "log4js": "2.2.0",
+    "nan": "^2.7.0",
+    "node-coincheck": "0.2.1",
+    "promised-io": "0.3.4",
+    "request": "2.81.0",
+    "underscore": "1.5.2"
   }
 }

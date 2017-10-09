@@ -16,6 +16,10 @@
             "type": "dateFile",
             "filename": "log/bitflyer.log"
         },
+        "quoine": {
+            "type": "dateFile",
+            "filename": "log/quoine.log"
+        },
         "kraken": {
             "type": "dateFile",
             "filename": "log/kraken.log"
@@ -23,7 +27,7 @@
     },
     "categories": {
         "default": {
-            "appenders": ["bitbot","coincheck","zaif","bitflyer", "kraken"],
+            "appenders": ["bitbot","coincheck","zaif","bitflyer", "kraken", "quoine"],
             "level": "debug"
         },
         "bitbot": {
@@ -40,6 +44,10 @@
         },
         "bitflyer": {
             "appenders": ["bitflyer"],
+            "level": "debug"
+        },
+        "quoine": {
+            "appenders": ["quoine"],
             "level": "debug"
         },
         "kraken": {

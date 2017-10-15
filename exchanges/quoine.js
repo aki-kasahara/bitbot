@@ -95,7 +95,7 @@ module.exports = {
         logger.info('Creating order for ' + amount + ' in ' + this.exchangeName + ' in market ' + market + ' to ' + type + ' at rate ' + rate);
         var body = {
           order_type : "limit",
-          product_id : balancesMap[this.market.name],
+          product_id : self.balancesMap[this.market.name],
           side : type,
           quantity : amount,
           price : rate

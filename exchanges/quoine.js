@@ -224,7 +224,7 @@ module.exports = {
         }
       };
 
-      if (method==="POST" && method==="PUT"){
+      if (method==="POST" || method==="PUT"){
         options.body = JSON.stringify(body);
       }
 

@@ -28,7 +28,7 @@ module.exports = {
 
     profitLimit: {
       'BTC_JPY': {
-        'min' : 40,
+        'min' : 50,
         'max' : 1000
       },
       'ETH_BTC': {

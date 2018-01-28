@@ -183,7 +183,7 @@ module.exports = {
                   self.emitter.emit(self.exchangeName + ':orderMatched');
               }, config.interval);
             } else {
-              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red + json);
+              logger.info('order for '.red + self.exchangeName + ' not filled yet!'.red + JSON.stringify(json));
               _.delay(function () {
                 self.activeOrders = {
                   child_order_id : json[0].child_order_id,
@@ -234,11 +234,10 @@ module.exports = {
     executeLossCut: function(){
       var deferred = new Deferred();
       var self = this;
-      var path = '/v1/me/cancelchildorder';
+      var path = '/v1/me/cancelallchildorders';
       //注文をキャンセルする
       var body = {
-        "product_code" : self.market.name,
-        "child_order_id" : self.activeOrders.child_order_id
+        "product_code" : self.market.name
       };
       logger.info('bitflyer cancel childorder:' + JSON.stringify(self.activeOrders));
       self.requestPrivateAPI('POST', path, body, function(error, response, body){

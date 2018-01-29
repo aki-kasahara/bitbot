@@ -106,6 +106,9 @@ module.exports = {
               self.emitter.emit(self.exchangeName + ':orderCreated');
             } else {
               logger.error('error: ' + json.error);
+              _.delay(function () {
+                 self.emitter.emit(self.exchangeName + ':orderCreated', market, type, rate, amount);
+              }, config.interval);
             }
 
           } else {
@@ -115,7 +118,7 @@ module.exports = {
             }, config.interval);
           }
 
-          //deferred.resolve(self);
+          deferred.resolve(self);
         });
     },
 

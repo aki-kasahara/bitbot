@@ -118,7 +118,7 @@ module.exports = {
             }, config.interval);
           }
 
-          deferred.resolve(self);
+          //deferred.resolve(self);
         });
     },
 

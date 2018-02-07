@@ -28,8 +28,8 @@ module.exports = {
 
     profitLimit: {
       'BTC_JPY': {
-        'min' : 50,
-        'max' : 1000
+        'min' : 200,
+        'max' : 2000
       },
       'ETH_BTC': {
         'min' : 0.0001,
@@ -48,7 +48,7 @@ module.exports = {
         //'btce'     : require('./exchanges/btce'),
         //'bitfinex' : require('./exchanges/bitfinex'),
         'kraken'   : require('./exchanges/kraken'),
-        'coincheck'   : require('./exchanges/coincheck'),
+        //'coincheck'   : require('./exchanges/coincheck'),
         'quoine'   : require('./exchanges/quoine'),
         //'btcchina' : require('./exchanges/btcchina'),
         'zaif' : require('./exchanges/zaif'),

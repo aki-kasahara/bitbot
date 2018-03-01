@@ -159,7 +159,7 @@ module.exports = {
           }, config.requestTimeouts.prices);
 
         } else {
-          logger.info(self.exchangeName + ' health is busy. Skip to get exchange info.');
+          logger.info(self.exchangeName + ' Skip to get exchange info. health is ' + this.health);
           try {deferred.resolve(self);} catch (e){}
         }
         this.checkHealth();
@@ -268,23 +268,34 @@ module.exports = {
     checkHealth: function(){
       var deferred = new Deferred();
       var self = this;
-
+      const date = new Date();
+      const maintainance_date = new Date('2018-03-01T04:05:00');
+      const diff = Math.abs(self.toMinute(maintainance_date) - self.toMinute(date)); 
       var gethealth_path = '/v1/gethealth';
-      request(self.host + gethealth_path, function(error, response, body){
-        if (!error && response.statusCode == 200){
-          var json = JSON.parse(body);
-          self.health = json.status;
-        } else {
-          logger.error('error: ' + error);
-        }
-        try {deferred.resolve(self);} catch (e){}
-      });
+
+      if (diff <= 6){
+        self.health = 'MAINTAINANCE';
+      } else {
+        request(self.host + gethealth_path, function(error, response, body){
+          if (!error && response.statusCode == 200){
+            var json = JSON.parse(body);
+            self.health = json.status;
+          } else {
+            logger.error('error: ' + error);
+          }
+          try {deferred.resolve(self);} catch (e){}
+        });
+      }
 
       setTimeout(function () {
           try {deferred.resolve();} catch (e){}
       }, config.requestTimeouts.prices);
 
       return deferred.promise;
+    },
+
+    toMinute: function(date){
+      return date.getHours()*60 + date.getMinutes();
     }
 
 };

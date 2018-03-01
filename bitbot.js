@@ -51,7 +51,7 @@ module.exports = {
         //'coincheck'   : require('./exchanges/coincheck'),
         'quoine'   : require('./exchanges/quoine'),
         //'btcchina' : require('./exchanges/btcchina'),
-        'zaif' : require('./exchanges/zaif'),
+        //'zaif' : require('./exchanges/zaif'),
         // 'anxpro'   : require('./exchanges/anxpro')
         'bitflyer'   : require('./exchanges/bitflyer')
     },

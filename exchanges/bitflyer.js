@@ -273,7 +273,7 @@ module.exports = {
       const diff = Math.abs(self.toMinute(maintainance_date) - self.toMinute(date)); 
       var gethealth_path = '/v1/gethealth';
 
-      if (diff <= 6){
+      if (diff <= 10){
         self.health = 'MAINTAINANCE';
       } else {
         request(self.host + gethealth_path, function(error, response, body){

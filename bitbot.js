@@ -1,10 +1,7 @@
 var colors      = require('colors'),
     config      = require('./config'),
     _           = require('underscore'),
-    when        = require('promised-io/promise').when,
-    all         = require('promised-io/promise').all,
     utils       = require('./utils'),
-    Deferred    = require("promised-io/promise").Deferred,
     db          = require('./keenioClient'),
     events      = require('events'),
     log4js      = require('log4js'),
@@ -47,8 +44,8 @@ module.exports = {
         //'cexio'    : require('./exchanges/cexio'),
         //'btce'     : require('./exchanges/btce'),
         //'bitfinex' : require('./exchanges/bitfinex'),
-        'kraken'   : require('./exchanges/kraken'),
-        //'coincheck'   : require('./exchanges/coincheck'),
+        //'kraken'   : require('./exchanges/kraken'),
+        'coincheck'   : require('./exchanges/coincheck'),
         'quoine'   : require('./exchanges/quoine'),
         //'btcchina' : require('./exchanges/btcchina'),
         //'zaif' : require('./exchanges/zaif'),
@@ -133,7 +130,7 @@ module.exports = {
             return exchange.fetchBalance();
         }, this);
 
-        all(promises).then(function () {
+        Promise.all(promises).then(function () {
             emitter.emit('balancesFetched');
         });
     },
@@ -150,7 +147,7 @@ module.exports = {
             return exchange.getExchangeInfo();
         }, this);
 
-        all(promises).then(function (array) {
+        Promise.all(promises).then(function (array) {
             logger.info('*** Finished Checking Exchange Prices for '.blue + config.market + ' *** '.blue);
             var list = self.getMarketsWithoutOpenOrders();
             result = self.calculateArbOpportunity(list);

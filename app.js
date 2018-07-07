@@ -1,4 +1,3 @@
-var bitbot = require('./bitbot');
-
+const bitbot = require('./bitbot');
 
 bitbot.initialize();

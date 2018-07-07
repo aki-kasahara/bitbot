@@ -18,5 +18,10 @@
     "node-coincheck": "0.2.1",
     "request": "2.81.0",
     "underscore": "1.5.2"
+  },
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-airbnb-base": "^13.0.0",
+    "eslint-plugin-import": "^2.13.0"
   }
 }
